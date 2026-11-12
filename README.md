@@ -3,20 +3,22 @@
 **From an instrument to an instrument driven by an agent.**
 
 A step-by-step guide to putting an AI agent in the driver's seat of a real lab instrument.
-It starts with one liquid handler and a Raspberry Pi.
+The path is universal. Chapter one walks it with a Hamilton STAR.
 
 Written by Di Hu. Draft, November 2026.
 
 **Read the guide: [di-omics.github.io/agentic-lab-guide](https://di-omics.github.io/agentic-lab-guide/)**
 
-## How it works
+## Two layers of the cake
 
-Each chapter takes one instrument through the same two layers.
+It is universal. Whatever the instrument, the path is the same: plug it into a Raspberry Pi,
+drive it with [PyLabRobot](https://docs.pylabrobot.org), and make an MCP that connects your
+company's context to it. That is layer 1 of the cake. Layer 2 is baking in expert judgment.
 
 | | | |
 | --- | --- | --- |
-| **Layer 1** | Get it going | The agent can reach the instrument, connect to it, and drive it. |
-| **Layer 2** | Expert level | The agent runs the instrument the way an expert would. |
+| **Layer 1** | Get it going | From an instrument, to a Raspberry Pi, to an MCP that connects your company's context to the PyLabRobot that drives it. |
+| **Layer 2** | Bake in expert judgment | Stay tuned. |
 
 ## Chapters
 
@@ -26,16 +28,16 @@ Each chapter takes one instrument through the same two layers.
 
 ## Chapter 01 at a glance
 
-Layer 1 for the Hamilton STAR and STARlet is four steps:
+Layer 1 for the Hamilton STAR and STARlet is five steps:
 
 1. Start with a Raspberry Pi.
 2. Get it connected and configured on your network.
 3. Cable the Hamilton to the Pi with a USB-A to USB-B cable.
-4. Have Claude install [PyLabRobot](https://docs.pylabrobot.org) and write the driving
-   approach.
+4. Have Claude install PyLabRobot and write the driving approach.
+5. Make an MCP that connects your company's context to the instrument.
 
-Layer 1 is done when Claude can connect to the Hamilton, initialize it, and stop it, while
-you watch.
+Layer 1 is done when your agent, with your company's context, can connect to the instrument
+through the MCP, initialize it, and stop it, while you watch.
 
 ## Stay at the instrument
 
