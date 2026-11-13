@@ -1,0 +1,30 @@
+regular, 100 uL
+  aspirate 500 uL/s, 1 mm above the bottom
+  dispense 500 uL/s, 1 mm above the bottom
+  blowout  20 uL
+  - Start with regular parameters, maximum speed for everything.
+  - Sufficient blowout volume, to ensure proper liquid handling.
+  - Aspirate low enough that the liquid is not missed.
+  - Dispense at a Z height where every droplet catches the well.
+
+cells, 100 uL
+  aspirate 500 uL/s, 1 mm above the bottom
+  dispense 300 uL/s, 3 mm above the bottom
+  blowout  20 uL
+  - Start with regular parameters, maximum speed for everything.
+  - Sufficient blowout volume, to ensure proper liquid handling.
+  - Aspirate low enough that the liquid is not missed.
+  - Gentler into cells: 50 to 70 percent of maximum speed.
+  - Far enough that the tips do not scrape the cells.
+  - Close enough that the droplet dips in the well.
+
+lysis, 100 uL
+  aspirate 500 uL/s, 1 mm above the bottom
+  dispense 500 uL/s, 1 mm above the bottom
+  blowout  20 uL
+  - Start with regular parameters, maximum speed for everything.
+  - Sufficient blowout volume, to ensure proper liquid handling.
+  - Aspirate low enough that the liquid is not missed.
+  - A forceful dispense for lysis.
+  - Dispense at a Z height where every droplet catches the well.
+

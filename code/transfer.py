@@ -6,6 +6,10 @@ eight channels at once. Simulation unless you pass --real.
     python transfer.py simple      # 100 uL of dye into every well
     python transfer.py dilution    # a two-fold serial dilution
     python transfer.py simple --corrections corrections.json
+    python transfer.py simple --material cells
+
+The agent says what the material is. The rulebook in principles.py
+sets the speed, the heights and the blowout.
 
 Reservoir column 1 holds the Rhodamine B, column 2 the water, and
 column 12 takes waste.
@@ -17,6 +21,7 @@ import json
 from pylabrobot.resources import Coordinate
 
 from deck import connect
+from principles import aspirate_args, describe, dispense_args, handling
 
 VOLUME = 100        # uL in every well at the end
 MIX_CYCLES = 3      # times to draw up and push out when mixing
@@ -31,10 +36,10 @@ def column(plate, number):
     return plate[f"A{number}:H{number}"]
 
 
-async def from_reservoir(lh, reservoir, number, vols):
+async def from_reservoir(lh, reservoir, number, vols, **how):
     well = reservoir[f"A{number}"][0]
     await lh.aspirate([well] * 8, vols=vols,
-                      offsets=IN_RESERVOIR, spread="custom")
+                      offsets=IN_RESERVOIR, spread="custom", **how)
 
 
 async def to_reservoir(lh, reservoir, number, vols):
@@ -43,19 +48,26 @@ async def to_reservoir(lh, reservoir, number, vols):
                       offsets=IN_RESERVOIR, spread="custom")
 
 
-async def simple(lh, tips, reservoir, plate, corrections=None):
-    """100 uL of dye from reservoir column 1 into every well."""
+async def simple(lh, tips, reservoir, plate, corrections=None,
+                 material="regular", volume=VOLUME):
+    """The same volume from reservoir column 1 into every well."""
     reservoir["A1"][0].tracker.set_volume(12000)  # what you loaded, in uL
+
+    # The expert's principles set how the liquid is handled.
+    how = handling(material)
+    print(describe(material, volume))
 
     # One volume per channel, rows A to H. Corrections come from a read.
     factors = corrections or {}
-    vols = [round(VOLUME * factors.get(row, 1), 1) for row in "ABCDEFGH"]
+    vols = [round(volume * factors.get(row, 1), 1) for row in "ABCDEFGH"]
     print("asking each channel for, in uL:", vols)
 
     await lh.pick_up_tips(column(tips, 1))
     for number in range(1, 13):
-        await from_reservoir(lh, reservoir, 1, vols)
-        await lh.dispense(column(plate, number), vols=vols)
+        await from_reservoir(lh, reservoir, 1, vols,
+                             **aspirate_args(how, vols))
+        await lh.dispense(column(plate, number), vols=vols,
+                          **dispense_args(how, vols))
     await lh.discard_tips()
 
 
@@ -110,7 +122,8 @@ async def main(args) -> None:
         if args.corrections:
             with open(args.corrections) as handle:
                 corrections = json.load(handle)
-        await simple(lh, tips, reservoir, plate, corrections)
+        await simple(lh, tips, reservoir, plate, corrections,
+                     args.material, args.volume)
     else:
         await dilution(lh, tips, reservoir, plate)
     report(plate)
@@ -126,4 +139,8 @@ if __name__ == "__main__":
                         help="the instrument is a STARlet")
     parser.add_argument("--corrections", metavar="FILE",
                         help="per-channel corrections from read_check.py")
+    parser.add_argument("--material", default="regular",
+                        help="regular, cells or lysis")
+    parser.add_argument("--volume", type=float, default=VOLUME,
+                        help="uL per well, for the simple transfer")
     asyncio.run(main(parser.parse_args()))
