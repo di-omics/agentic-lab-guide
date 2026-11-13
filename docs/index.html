@@ -126,6 +126,9 @@
   .done .who { font-size: 13px; color: var(--accent); margin-bottom: 4px; }
   .done p { margin: 0; }
 
+  .gate { border-top: 1px solid var(--ink); padding: 18px 0 6px; margin-top: 44px; }
+  .gate .who { font-size: 13px; color: var(--accent); margin-bottom: 4px; }
+  .gate p { margin: 0 0 12px; }
   .safety { font-size: 15px; color: var(--soft); padding: 18px 0 0; }
   .safety b { font-weight: 400; color: var(--ink); }
 
@@ -223,7 +226,7 @@
       <div>
         <div class="n">Layer 2</div>
         <div class="t">Bake in expert judgment</div>
-        <p>Take a picture of the deck, do a transfer, read it in a plate reader. More is being written.</p>
+        <p>A picture of the deck, then a QC gate: a liquid transfer, Rhodamine B, a plate read, and a look at the numbers. More is being written.</p>
       </div>
     </div>
     <p class="note" style="margin-top:22px;font-size:15px">Each chapter walks one instrument through both layers. PyLabRobot keeps a <a href="https://docs.pylabrobot.org/dev/user_guide/machines.html">list of the machines it supports</a>.</p>
@@ -478,7 +481,7 @@ claude mcp add --transport stdio hamilton-star -- \
   <section>
     <p class="eyebrow" id="layer-2">Layer 2</p>
     <h2>Bake in expert judgment.</h2>
-    <p>Getting the instrument to move is layer 1 of the cake. Layer 2 is baking in expert judgment. It starts with three steps: take a picture of the deck, do a transfer, and read it in a plate reader.</p>
+    <p>Getting the instrument to move is layer 1 of the cake. Layer 2 is baking in expert judgment. It starts with a picture of the deck and a QC gate: set up a liquid transfer from the deck, make it a Rhodamine B transfer, read the plate, and see what is up.</p>
 
     <div class="step" id="judgment-1" style="margin-top:40px">
       <div class="no">1</div>
@@ -561,10 +564,15 @@ if __name__ == "__main__":
       </div>
     </div>
 
+    <div class="gate" id="qc-gate">
+      <div class="who">The QC gate</div>
+      <p>Before the instrument does real work, it has to show that it moves liquid the way it says it does. Four steps: a liquid transfer, Rhodamine B, a plate read, and a look at the numbers.</p>
+    </div>
+
     <div class="step" id="judgment-2">
       <div class="no">2</div>
       <div class="body">
-        <h3>Do a transfer</h3>
+        <h3>Set up a liquid transfer from the deck</h3>
         <p>Have a source and a destination 96-well plate, and move liquid between them. Two transfers to start: a simple transfer, 100 uL from a 12-well reservoir into every well of the plate, and a serial dilution.</p>
         <div class="file"><div class="cap">code/transfer.py</div>
 <pre data-file="code/transfer.py">"""Layer 2 transfers: a simple transfer and a serial dilution.
@@ -575,8 +583,8 @@ eight channels at once. Simulation unless you pass --real.
     python transfer.py simple      # 100 uL of dye into every well
     python transfer.py dilution    # a two-fold serial dilution
 
-Reservoir column 1 holds the dye, column 2 the diluent, and column 12
-takes waste.
+Reservoir column 1 holds the Rhodamine B, column 2 the water, and
+column 12 takes waste.
 """
 import argparse
 import asyncio
@@ -697,14 +705,93 @@ python transfer.py dilution    # a two-fold serial dilution</pre></div>
     <div class="step" id="judgment-3">
       <div class="no">3</div>
       <div class="body">
-        <h3>Read it in a plate reader</h3>
-        <p>Simulation checks the logic. It cannot tell you whether the liquid really arrived. A plate reader can. Run the transfers with a standard liquid handling dye at the right concentration, read the plate, and you have a number for every well.</p>
+        <h3>Set up Rhodamine B transfers</h3>
+        <p>Simulation checks the logic. It cannot tell you whether the liquid really arrived. So make the liquid something a plate reader can see: Rhodamine B, at the right concentration. Where more of it arrives, the well reads higher.</p>
         <p>Claude will design this for you.</p>
         <div class="say">
           <div class="who">Say to Claude Code</div>
-          <p>My plate reader is a &lt;model&gt;. Design a dye check for these two transfers. Pick a standard liquid handling dye that my reader can read, and tell me the wavelength. Work out the concentration so that 100 uL in a 96-well plate reads in the middle of the reader's linear range, and the top of the serial dilution stays inside it. Tell me how to make it up, and what result would make you stop.</p>
+          <p>My plate reader is a &lt;model&gt;. Design the Rhodamine B for these two transfers: the wavelength, the concentration so that 100 uL in a 96-well plate reads in the middle of the reader's linear range, how to make it up from my stock, and what goes in which reservoir column.</p>
         </div>
-        <p>Read the plate and export it as a CSV of 8 rows and 12 columns. If PyLabRobot <a href="https://docs.pylabrobot.org/dev/user_guide/machines.html">supports your plate reader</a>, Claude Code can drive the reader too.</p>
+        <div class="file"><div class="cap">code/dye_design.py</div>
+<pre data-file="code/dye_design.py">"""Design the Rhodamine B for the QC transfers.
+
+This is a starting point worked out from public numbers. Read the dye
+once on your own plate reader and adjust before you trust it.
+
+    python dye_design.py
+    python dye_design.py --target 0.8 --stock 100 --make 20
+"""
+import argparse
+
+MOLAR_MASS = 479.01    # g/mol, Rhodamine B
+EXTINCTION = 110000    # per M per cm near 554 nm. The supplier's range
+                       # is 104,500 to 115,800, measured in methanol.
+PATH_LENGTH = 0.3      # cm, about how deep 100 uL sits in a 96-well plate
+DILUTION_COLUMNS = 6
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--target", type=float, default=0.8,
+                        help="absorbance wanted from 100 uL")
+    parser.add_argument("--stock", type=float, default=100,
+                        help="your stock, in ug/mL")
+    parser.add_argument("--make", type=float, default=20,
+                        help="mL of working dye to make")
+    args = parser.parse_args()
+
+    molar = args.target / (EXTINCTION * PATH_LENGTH)
+    ug_per_ml = molar * MOLAR_MASS * 1000
+    stock_ml = args.make * ug_per_ml / args.stock
+
+    print("Read absorbance near 554 nm, 100 uL per well.")
+    print(f"Working dye: {molar * 1e6:.0f} uM, which is"
+          f" {ug_per_ml:.1f} ug/mL.")
+    print(f"To make {args.make:.0f} mL: {stock_ml:.2f} mL of"
+          f" {args.stock:.0f} ug/mL stock,"
+          f" topped up to {args.make:.0f} mL with water.")
+    print("Reservoir: dye in column 1, water in column 2,"
+          " column 12 empty for waste.")
+    print("Simple transfer: every well should read about"
+          f" {args.target:.2f} above the blank.")
+    series = [args.target * 0.5 ** n for n in range(DILUTION_COLUMNS)]
+    print("Serial dilution, columns 1 to 6: "
+          + ", ".join(f"{value:.3f}" for value in series))
+    print("The last columns sit near a reader's floor."
+          " Check yours can read them.")</pre></div>
+        <div class="file"><div class="cap">what it prints</div>
+<pre>Read absorbance near 554 nm, 100 uL per well.
+Working dye: 24 uM, which is 11.6 ug/mL.
+To make 20 mL: 2.32 mL of 100 ug/mL stock, topped up to 20 mL with water.
+Reservoir: dye in column 1, water in column 2, column 12 empty for waste.
+Simple transfer: every well should read about 0.80 above the blank.
+Serial dilution, columns 1 to 6: 0.800, 0.400, 0.200, 0.100, 0.050, 0.025
+The last columns sit near a reader's floor. Check yours can read them.</pre></div>
+        <p class="note">This is a starting point from public numbers: the supplier's extinction coefficient, measured in methanol, and a path of about 0.3 cm for 100 uL. Read the dye once on your own reader and adjust.</p>
+        <p>Load the reservoir, run the transfer once with water, then run it with the dye. Someone stays at the instrument.</p>
+        <div class="file"><div class="cap">on the Pi</div>
+<pre>python transfer.py simple --real
+python transfer.py dilution --real</pre></div>
+        <p class="note">Rhodamine B is a hazardous chemical. Read its safety data sheet, and wear gloves and eye protection.</p>
+      </div>
+    </div>
+
+    <div class="step" id="judgment-4">
+      <div class="no">4</div>
+      <div class="body">
+        <h3>Plate read</h3>
+        <p>Take the plate to the plate reader and read it. If PyLabRobot <a href="https://docs.pylabrobot.org/dev/user_guide/machines.html">supports your plate reader</a>, Claude Code can drive the reader too. If not, export the read and hand it over.</p>
+        <div class="say">
+          <div class="who">Say to Claude Code</div>
+          <p>Here is the export from my plate reader. Turn it into a CSV of 8 rows and 12 columns, rows A to H and columns 1 to 12, exactly as the plate looks from above.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="judgment-5">
+      <div class="no">5</div>
+      <div class="body">
+        <h3>See what is up</h3>
+        <p>Now the numbers. Every well of the simple transfer got the same volume, so every well should read alike. Each column of the serial dilution should read half of the one before it.</p>
         <div class="file"><div class="cap">code/read_check.py</div>
 <pre data-file="code/read_check.py">"""Check a plate read against what the transfer should have made.
 
@@ -810,6 +897,7 @@ if __name__ == "__main__":
   channel G:  +1.6% from the plate mean
   channel H:  +2.2% from the plate mean
 FAIL: a channel is 12.9% off, over 5.0%</pre></div>
+        <p>That is the gate. A plate that fails does not go on to real work, and the numbers say where to look: here, one channel.</p>
         <p class="note">The 5 is a placeholder. The pass mark is the expert's call.</p>
       </div>
     </div>

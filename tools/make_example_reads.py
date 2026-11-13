@@ -33,7 +33,7 @@ def simple(rng, low_channel=None):
 def dilution(rng):
     grid = []
     for _ in range(8):
-        row = [BLANK + 2 * SIGNAL * 0.5 ** c * rng.gauss(1, NOISE)
+        row = [BLANK + SIGNAL * 0.5 ** c * rng.gauss(1, NOISE)
                for c in range(6)]
         row += [0.0] * 5 + [BLANK * rng.gauss(1, NOISE)]
         grid.append(row)

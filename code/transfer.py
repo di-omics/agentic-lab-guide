@@ -6,8 +6,8 @@ eight channels at once. Simulation unless you pass --real.
     python transfer.py simple      # 100 uL of dye into every well
     python transfer.py dilution    # a two-fold serial dilution
 
-Reservoir column 1 holds the dye, column 2 the diluent, and column 12
-takes waste.
+Reservoir column 1 holds the Rhodamine B, column 2 the water, and
+column 12 takes waste.
 """
 import argparse
 import asyncio
