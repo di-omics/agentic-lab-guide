@@ -1,0 +1,2 @@
+pylabrobot[usb]==0.2.2
+mcp==2.3.0

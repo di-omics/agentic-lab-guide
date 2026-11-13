@@ -103,6 +103,7 @@
   /* steps */
   .step { display: grid; grid-template-columns: 64px 1fr; padding: 34px 0 18px; border-top: 1px solid var(--line); }
   .step .no { font-weight: 200; font-size: 40px; line-height: 1; color: var(--accent); }
+  .step .body { min-width: 0; }
   .step .body > p:last-child { margin-bottom: 0; }
   pre {
     margin: 14px 0 18px; padding: 14px 16px; overflow-x: auto;
@@ -110,7 +111,13 @@
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     font-size: 13.5px; line-height: 1.6; color: var(--ink);
   }
-  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.86em; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.86em; white-space: nowrap; }
+  .file { margin: 14px 0 18px; }
+  .file .cap {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px; color: var(--soft); margin-bottom: 6px;
+  }
+  .file pre { margin: 0; font-size: 12.5px; }
   .say { margin: 16px 0 18px; padding: 2px 0 2px 18px; border-left: 1px solid var(--accent); }
   .say .who { font-size: 12px; color: var(--accent); letter-spacing: 0.03em; margin-bottom: 4px; }
   .say p { margin: 0; font-size: 16px; }
@@ -163,14 +170,14 @@
     <p class="byline">Written by <b>Di Hu</b> &middot; Draft, November 2026</p>
   </div>
 
-  <div class="path" role="img" aria-label="Your agent, holding your company's context, reaches a Raspberry Pi through an MCP. The Pi runs PyLabRobot and drives the instrument over a cable.">
+  <div class="path" role="img" aria-label="Claude Code, holding your company's context, reaches a Raspberry Pi through an MCP. The Pi runs PyLabRobot and drives the instrument over a cable.">
     <div class="node">
       <svg width="72" height="56" viewBox="0 0 72 56" fill="none" stroke="#6b7280" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
         <rect x="14" y="8" width="44" height="30" rx="2"/>
         <path d="M6 46h60M10 46l4-8M62 46l-4-8"/>
         <path d="M24 18h14M24 24h22M24 30h10" stroke="#5b7089"/>
       </svg>
-      <div class="name">Your agent</div>
+      <div class="name">Claude Code</div>
       <div class="what">with your company's context</div>
     </div>
     <div class="link"><div class="wire"></div><div class="label">MCP</div></div>
@@ -229,9 +236,9 @@
   </div>
 
   <section>
-    <p class="eyebrow">Layer 1</p>
+    <p class="eyebrow" id="layer-1">Layer 1</p>
     <h2>Get it going.</h2>
-    <p>Five steps: a Raspberry Pi, your network, one cable, Claude, and an MCP.</p>
+    <p>Five steps: a Raspberry Pi, your network, one cable, Claude Code, and an MCP.</p>
 
     <h3 style="margin-top:34px">What you need</h3>
     <table>
@@ -242,7 +249,7 @@
       <tr><td>A laptop with Claude Code</td><td>Where you work with the agent.</td></tr>
     </table>
 
-    <div class="step" style="margin-top:40px">
+    <div class="step" id="step-1" style="margin-top:40px">
       <div class="no">1</div>
       <div class="body">
         <h3>Start with a Raspberry Pi</h3>
@@ -251,7 +258,7 @@
       </div>
     </div>
 
-    <div class="step">
+    <div class="step" id="step-2">
       <div class="no">2</div>
       <div class="body">
         <h3>Get it connected and configured on your network</h3>
@@ -259,11 +266,15 @@
 <pre>ssh &lt;user&gt;@star-pi.local</pre>
         <p>Once you are in, bring it up to date:</p>
 <pre>sudo apt update
-sudo apt upgrade</pre>
+sudo apt upgrade
+sudo apt install -y git python3-venv</pre>
+        <p>Then, back on your laptop, let it into the Pi without a password, so Claude Code can reach the Pi on its own:</p>
+<pre>ssh-copy-id &lt;user&gt;@star-pi.local</pre>
+        <p class="note">If your laptop has no SSH key yet, run <code>ssh-keygen</code> first.</p>
       </div>
     </div>
 
-    <div class="step">
+    <div class="step" id="step-3">
       <div class="no">3</div>
       <div class="body">
         <h3>Cable the Hamilton to the Pi</h3>
@@ -278,56 +289,194 @@ lsusb</pre>
       </div>
     </div>
 
-    <div class="step">
+    <div class="step" id="step-4">
       <div class="no">4</div>
       <div class="body">
         <h3>Have Claude install PyLabRobot and write the driving approach</h3>
-        <p><a href="https://docs.pylabrobot.org">PyLabRobot</a> is the open-source Python library that talks to the Hamilton. From here on you do not type commands. You ask Claude, and Claude works on the Pi over SSH.</p>
+        <p><a href="https://docs.pylabrobot.org">PyLabRobot</a> is the open-source Python library that talks to the Hamilton. From here on you can ask Claude Code instead of typing, and Claude Code works on the Pi over SSH. Each ask is followed by the code it comes down to, so you can check the agent's work or run it yourself.</p>
 
         <p>First, the install.</p>
         <div class="say">
-          <div class="who">Say to Claude</div>
-          <p>You can reach a Raspberry Pi with <code>ssh &lt;user&gt;@star-pi.local</code>. It is connected by USB to a Hamilton STAR. On the Pi, make a project folder with a Python virtual environment and install PyLabRobot with USB support. Tell me which version you installed.</p>
+          <div class="who">Say to Claude Code</div>
+          <p>You can reach a Raspberry Pi with <code>ssh &lt;user&gt;@star-pi.local</code>. It is connected by USB to a Hamilton STAR. On the Pi, clone the Agentic Lab Guide, make a Python virtual environment in its <code>code</code> folder, and install the requirements. Tell me which versions you installed.</p>
         </div>
+        <div class="file"><div class="cap">on the Pi</div>
+<pre>git clone https://github.com/di-omics/agentic-lab-guide.git
+cd agentic-lab-guide/code
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements.txt</pre></div>
+        <div class="file"><div class="cap">code/requirements.txt</div>
+<pre data-file="code/requirements.txt">pylabrobot[usb]==0.2.2
+mcp==2.3.0</pre></div>
+        <p class="note">These are the versions this guide was tested with.</p>
 
         <p>Then the driving approach: a short plan for how the agent will drive this instrument, written before it drives anything.</p>
         <div class="say">
-          <div class="who">Say to Claude</div>
+          <div class="who">Say to Claude Code</div>
           <p>Read the PyLabRobot source you just installed, not your memory of it. Then write a one-page driving approach for this Hamilton STAR: how you will connect, how you will initialize, what you will run first, what you will never run without asking me, and how a run is stopped. Do not move the instrument yet.</p>
         </div>
 
-        <p>Then the first connection, with you at the instrument.</p>
+        <p>Then first contact: connect, initialize, stop. The script runs in simulation unless you ask for the real instrument.</p>
+        <div class="file"><div class="cap">code/first_contact.py</div>
+<pre data-file="code/first_contact.py">"""First contact: connect to the Hamilton, initialize it, and stop.
+
+Simulation first. Nothing moves:
+
+    python first_contact.py
+
+Then the real instrument, with someone standing at it:
+
+    python first_contact.py --real
+
+Add --starlet if the instrument is a STARlet.
+"""
+import argparse
+import asyncio
+
+from pylabrobot.liquid_handling import LiquidHandler
+from pylabrobot.liquid_handling.backends import (
+    LiquidHandlerChatterboxBackend,
+    STARBackend,
+)
+from pylabrobot.resources.hamilton import STARDeck, STARLetDeck
+
+
+async def main(real: bool, starlet: bool) -&gt; None:
+    backend = STARBackend() if real else LiquidHandlerChatterboxBackend()
+    deck = STARLetDeck() if starlet else STARDeck()
+    lh = LiquidHandler(backend=backend, deck=deck)
+
+    # On the real instrument, setup initializes it. It moves.
+    await lh.setup()
+    print("Connected and initialized." + ("" if real else " (simulated)"))
+
+    await lh.stop()
+    print("Stopped.")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--real", action="store_true",
+                        help="drive the real instrument")
+    parser.add_argument("--starlet", action="store_true",
+                        help="the instrument is a STARlet")
+    args = parser.parse_args()
+    asyncio.run(main(args.real, args.starlet))</pre></div>
         <div class="say">
-          <div class="who">Say to Claude</div>
-          <p>Write the smallest script that connects to the STAR, initializes it, and stops. Show it to me before you run it. I am standing at the instrument.</p>
+          <div class="who">Say to Claude Code</div>
+          <p>Run <code>first_contact.py</code> in simulation and show me the output. Then run it with <code>--real</code>. I am standing at the instrument.</p>
         </div>
+        <div class="file"><div class="cap">on the Pi</div>
+<pre>python first_contact.py          # simulation, nothing moves
+python first_contact.py --real   # the real instrument, it moves</pre></div>
       </div>
     </div>
 
-    <div class="step">
+    <div class="step" id="step-5">
       <div class="no">5</div>
       <div class="body">
         <h3>Make an MCP that connects your company's context to the instrument</h3>
         <p>So far the instrument answers to one person at one terminal. An MCP changes that. <a href="https://modelcontextprotocol.io">MCP</a>, the Model Context Protocol, is an open standard for connecting AI applications to outside systems. An MCP server on the Pi offers the instrument as a set of tools, and each tool is something PyLabRobot can do.</p>
-        <p>Once it exists, the agent that already holds your company's context can reach the PyLabRobot that drives the instrument.</p>
+        <p>Claude Code is where your company's context already lives. This adds the instrument to it, so the same agent can reach the PyLabRobot that drives the instrument.</p>
+        <div class="file"><div class="cap">code/instrument_mcp.py</div>
+<pre data-file="code/instrument_mcp.py">"""An MCP server that offers one instrument to Claude Code.
+
+It runs on the Raspberry Pi. Claude Code starts it over SSH and calls
+its tools. It simulates unless STAR_REAL=1 is set. Set
+STAR_MODEL=STARlet for a STARlet.
+"""
+import contextlib
+import os
+import sys
+
+from mcp.server.mcpserver import MCPServer
+from pylabrobot.liquid_handling import LiquidHandler
+from pylabrobot.liquid_handling.backends import (
+    LiquidHandlerChatterboxBackend,
+    STARBackend,
+)
+from pylabrobot.resources.hamilton import STARDeck, STARLetDeck
+
+REAL = os.environ.get("STAR_REAL") == "1"
+STARLET = os.environ.get("STAR_MODEL", "STAR").lower() == "starlet"
+
+server = MCPServer("hamilton-star")
+lh: LiquidHandler | None = None
+
+
+@server.tool()
+async def status() -&gt; str:
+    """Say whether the instrument is connected, and if this is real."""
+    state = "connected" if lh is not None else "not connected"
+    mode = "real instrument" if REAL else "simulation"
+    return f"{state} ({mode})"
+
+
+@server.tool()
+async def connect_and_initialize(someone_is_watching: bool) -&gt; str:
+    """Connect and initialize. On the real instrument this moves it."""
+    global lh
+    if lh is not None:
+        return "Already connected."
+    if REAL and not someone_is_watching:
+        return "Refused. Someone has to be standing at the instrument."
+    backend = STARBackend() if REAL else LiquidHandlerChatterboxBackend()
+    deck = STARLetDeck() if STARLET else STARDeck()
+    handler = LiquidHandler(backend=backend, deck=deck)
+    with contextlib.redirect_stdout(sys.stderr):  # stdout belongs to MCP
+        await handler.setup()
+    lh = handler
+    return "Connected and initialized."
+
+
+@server.tool()
+async def stop() -&gt; str:
+    """Stop and disconnect from the instrument."""
+    global lh
+    if lh is None:
+        return "Not connected."
+    with contextlib.redirect_stdout(sys.stderr):
+        await lh.stop()
+    lh = None
+    return "Stopped."
+
+
+if __name__ == "__main__":
+    server.run()  # stdio: Claude Code talks to it over stdin and stdout</pre></div>
+
+        <p>Connect it to Claude Code. Run this on your laptop:</p>
+        <div class="file"><div class="cap">on your laptop</div>
+<pre>claude mcp add --transport stdio hamilton-star -- \
+  ssh &lt;user&gt;@star-pi.local \
+  "cd agentic-lab-guide/code &amp;&amp; env/bin/python instrument_mcp.py"</pre></div>
+        <p>That is the simulation. Claude Code starts the server on the Pi over SSH whenever it needs it.</p>
         <div class="say">
-          <div class="who">Say to Claude</div>
-          <p>Build a small MCP server on the Pi around the script you just wrote. Start with tools for what already works: connect, initialize, and stop. Any tool that moves the instrument waits for my confirmation. Then show me how to add this server to our company's agent.</p>
+          <div class="who">Say to Claude Code</div>
+          <p>Use the hamilton-star tools. Check the status, connect and initialize, check the status again, then stop.</p>
         </div>
-        <p class="note">For a worked example of PyLabRobot behind MCP tools, see <a href="https://github.com/di-omics/plr-mcp">plr-mcp</a>.</p>
+
+        <p>When the simulation does what you expect, switch to the real instrument:</p>
+        <div class="file"><div class="cap">on your laptop</div>
+<pre>claude mcp remove hamilton-star
+claude mcp add --transport stdio hamilton-star -- \
+  ssh &lt;user&gt;@star-pi.local \
+  "cd agentic-lab-guide/code &amp;&amp; STAR_REAL=1 env/bin/python instrument_mcp.py"</pre></div>
+        <p>On the real instrument, <code>connect_and_initialize</code> refuses unless someone is standing at it.</p>
+        <p class="note">For a fuller example of PyLabRobot behind MCP tools, see <a href="https://github.com/di-omics/plr-mcp">plr-mcp</a>.</p>
       </div>
     </div>
 
     <div class="done">
       <div class="who">Layer 1 is done when</div>
-      <p>Your agent, with your company's context, can connect to the instrument through the MCP, initialize it, and stop it, while you watch.</p>
+      <p>Claude Code, with your company's context, can connect to the instrument through the MCP, initialize it, and stop it, while you watch.</p>
     </div>
 
     <p class="safety"><b>Stay at the instrument.</b> A liquid handler has moving parts. Someone watches the deck for every run and knows how to stop it. PyLabRobot drives the STAR through its firmware, and its authors are plain that you use the driver at your own risk and that warranty is between you and your vendor.</p>
   </section>
 
   <section>
-    <p class="eyebrow">Layer 2</p>
+    <p class="eyebrow" id="layer-2">Layer 2</p>
     <h2>Bake in expert judgment.</h2>
     <p>Getting the instrument to move is layer 1 of the cake. Layer 2 is baking in expert judgment.</p>
     <div class="open"><b>Being written.</b> Stay tuned.</div>

@@ -24,7 +24,7 @@ company's context to it. That is layer 1 of the cake. Layer 2 is baking in exper
 
 | | Instrument | Layer 1 | Layer 2 |
 | --- | --- | --- | --- |
-| 01 | Hamilton STAR and STARlet | first draft | being written |
+| 01 | Hamilton STAR and STARlet | first draft, with code | being written |
 
 ## Chapter 01 at a glance
 
@@ -33,11 +33,35 @@ Layer 1 for the Hamilton STAR and STARlet is five steps:
 1. Start with a Raspberry Pi.
 2. Get it connected and configured on your network.
 3. Cable the Hamilton to the Pi with a USB-A to USB-B cable.
-4. Have Claude install PyLabRobot and write the driving approach.
+4. Have Claude Code install PyLabRobot and write the driving approach.
 5. Make an MCP that connects your company's context to the instrument.
 
-Layer 1 is done when your agent, with your company's context, can connect to the instrument
+Layer 1 is done when Claude Code, with your company's context, can connect to the instrument
 through the MCP, initialize it, and stop it, while you watch.
+
+## The how-to, in code
+
+The guide shows real files, and they live here.
+
+| | |
+| --- | --- |
+| [code/requirements.txt](code/requirements.txt) | PyLabRobot and the MCP library, pinned to the versions the guide was tested with |
+| [code/first_contact.py](code/first_contact.py) | Step 4: connect, initialize, stop. Simulation unless you pass `--real` |
+| [code/instrument_mcp.py](code/instrument_mcp.py) | Step 5: an MCP server that offers the instrument to Claude Code. Simulation unless `STAR_REAL=1` |
+| [tools/bake.py](tools/bake.py) | Copies the code files into the page. `--check` fails if the page and the files differ |
+
+Try it with no instrument at all:
+
+```bash
+cd code
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+python first_contact.py
+```
+
+Status: both files are tested in simulation with the pinned versions. The real-instrument
+path uses the same calls and has not been run for this guide yet.
 
 ## Stay at the instrument
 
@@ -47,5 +71,7 @@ use the driver at your own risk and that warranty is between you and your vendor
 
 ## Layout
 
-- `docs/index.html` -- the guide itself, a single page with no build step and no
-  dependencies. Open it in a browser.
+- `docs/index.html` -- the guide itself, a single page with no dependencies. Open it in a
+  browser.
+- `code/` -- the files the guide shows.
+- `tools/bake.py` -- keeps the page and the code identical.
