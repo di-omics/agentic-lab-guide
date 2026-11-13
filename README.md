@@ -9,11 +9,12 @@ Written by Di Hu. Draft, November 2026.
 
 **Read the guide: [di-omics.github.io/agentic-lab-guide](https://di-omics.github.io/agentic-lab-guide/)**
 
-## Two layers of the cake
+## 2+ layers of cake
 
 It is universal. Whatever the instrument, the path is the same: plug it into a Raspberry Pi,
 drive it with [PyLabRobot](https://docs.pylabrobot.org), and make an MCP that connects your
-company's context to it. That is layer 1 of the cake. Layer 2 is baking in expert judgment.
+company's context to it. That is layer 1 of the cake. Layer 2 is baking in expert judgment. And there are more layers
+of cake than two.
 
 | | | |
 | --- | --- | --- |
