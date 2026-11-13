@@ -1,0 +1,7 @@
+Read absorbance near 554 nm, 100 uL per well.
+Working dye: 24 uM, which is 11.6 ug/mL.
+To make 20 mL: 2.32 mL of 100 ug/mL stock, topped up to 20 mL with water.
+Reservoir: dye in column 1, water in column 2, column 12 empty for waste.
+Simple transfer: every well should read about 0.80 above the blank.
+Serial dilution, columns 1 to 6: 0.800, 0.400, 0.200, 0.100, 0.050, 0.025
+The last columns sit near a reader's floor. Check yours can read them.

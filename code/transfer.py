@@ -5,12 +5,14 @@ eight channels at once. Simulation unless you pass --real.
 
     python transfer.py simple      # 100 uL of dye into every well
     python transfer.py dilution    # a two-fold serial dilution
+    python transfer.py simple --corrections corrections.json
 
 Reservoir column 1 holds the Rhodamine B, column 2 the water, and
 column 12 takes waste.
 """
 import argparse
 import asyncio
+import json
 
 from pylabrobot.resources import Coordinate
 
@@ -29,26 +31,31 @@ def column(plate, number):
     return plate[f"A{number}:H{number}"]
 
 
-async def from_reservoir(lh, reservoir, number, volume):
+async def from_reservoir(lh, reservoir, number, vols):
     well = reservoir[f"A{number}"][0]
-    await lh.aspirate([well] * 8, vols=[volume] * 8,
+    await lh.aspirate([well] * 8, vols=vols,
                       offsets=IN_RESERVOIR, spread="custom")
 
 
-async def to_reservoir(lh, reservoir, number, volume):
+async def to_reservoir(lh, reservoir, number, vols):
     well = reservoir[f"A{number}"][0]
-    await lh.dispense([well] * 8, vols=[volume] * 8,
+    await lh.dispense([well] * 8, vols=vols,
                       offsets=IN_RESERVOIR, spread="custom")
 
 
-async def simple(lh, tips, reservoir, plate):
+async def simple(lh, tips, reservoir, plate, corrections=None):
     """100 uL of dye from reservoir column 1 into every well."""
     reservoir["A1"][0].tracker.set_volume(12000)  # what you loaded, in uL
 
+    # One volume per channel, rows A to H. Corrections come from a read.
+    factors = corrections or {}
+    vols = [round(VOLUME * factors.get(row, 1), 1) for row in "ABCDEFGH"]
+    print("asking each channel for, in uL:", vols)
+
     await lh.pick_up_tips(column(tips, 1))
     for number in range(1, 13):
-        await from_reservoir(lh, reservoir, 1, VOLUME)
-        await lh.dispense(column(plate, number), vols=[VOLUME] * 8)
+        await from_reservoir(lh, reservoir, 1, vols)
+        await lh.dispense(column(plate, number), vols=vols)
     await lh.discard_tips()
 
 
@@ -61,13 +68,13 @@ async def dilution(lh, tips, reservoir, plate):
     # Diluent first: every column after the first, and the blank.
     await lh.pick_up_tips(column(tips, next(tip_column)))
     for number in [*range(2, DILUTION_COLUMNS + 1), BLANK_COLUMN]:
-        await from_reservoir(lh, reservoir, 2, VOLUME)
+        await from_reservoir(lh, reservoir, 2, [VOLUME] * 8)
         await lh.dispense(column(plate, number), vols=[VOLUME] * 8)
     await lh.discard_tips()
 
     # Dye into column 1, twice the final volume.
     await lh.pick_up_tips(column(tips, next(tip_column)))
-    await from_reservoir(lh, reservoir, 1, 2 * VOLUME)
+    await from_reservoir(lh, reservoir, 1, [2 * VOLUME] * 8)
     await lh.dispense(column(plate, 1), vols=[2 * VOLUME] * 8)
 
     # Carry half into the next column, mix, change tips, repeat.
@@ -84,22 +91,28 @@ async def dilution(lh, tips, reservoir, plate):
 
     # Take the extra out of the last column so every well reads alike.
     await lh.aspirate(column(plate, DILUTION_COLUMNS), vols=[VOLUME] * 8)
-    await to_reservoir(lh, reservoir, 12, VOLUME)
+    await to_reservoir(lh, reservoir, 12, [VOLUME] * 8)
     await lh.discard_tips()
 
 
 def report(plate):
     """Print what the plate should now hold, column by column."""
     for number in range(1, 13):
-        volumes = {well.tracker.get_used_volume()
+        volumes = {round(well.tracker.get_used_volume(), 1)
                    for well in column(plate, number)}
         print(f"column {number:2}: {sorted(volumes)} uL")
 
 
-async def main(task: str, real: bool, starlet: bool) -> None:
-    lh, tips, reservoir, plate = await connect(real, starlet)
-    await {"simple": simple, "dilution": dilution}[task](
-        lh, tips, reservoir, plate)
+async def main(args) -> None:
+    lh, tips, reservoir, plate = await connect(args.real, args.starlet)
+    if args.task == "simple":
+        corrections = None
+        if args.corrections:
+            with open(args.corrections) as handle:
+                corrections = json.load(handle)
+        await simple(lh, tips, reservoir, plate, corrections)
+    else:
+        await dilution(lh, tips, reservoir, plate)
     report(plate)
     await lh.stop()
 
@@ -111,5 +124,6 @@ if __name__ == "__main__":
                         help="drive the real instrument")
     parser.add_argument("--starlet", action="store_true",
                         help="the instrument is a STARlet")
-    args = parser.parse_args()
-    asyncio.run(main(args.task, args.real, args.starlet))
+    parser.add_argument("--corrections", metavar="FILE",
+                        help="per-channel corrections from read_check.py")
+    asyncio.run(main(parser.parse_args()))

@@ -18,7 +18,7 @@ company's context to it. That is layer 1 of the cake. Layer 2 is baking in exper
 | | | |
 | --- | --- | --- |
 | **Layer 1** | Get it going | From an instrument, to a Raspberry Pi, to an MCP that connects your company's context to the PyLabRobot that drives it. |
-| **Layer 2** | Bake in expert judgment | A picture of the deck, then a QC gate: a liquid transfer, Rhodamine B, a plate read, and a look at the numbers. More is being written. |
+| **Layer 2** | Bake in expert judgment | A picture of the deck, then a QC gate: a liquid transfer, Rhodamine B, a plate read, and the CV, readjusted until it passes. More is being written. |
 
 ## Chapters
 
@@ -47,7 +47,9 @@ Layer 2 starts with a picture of the deck and a QC gate:
    reservoir into a 96-well plate, and a serial dilution.
 3. Set up Rhodamine B transfers, at the right concentration. Claude designs this.
 4. Plate read.
-5. See what is up: the numbers decide whether the instrument goes on to real work.
+5. See what is up: look at the numbers, channel by channel.
+6. Liquid transfer CV, and readjust: correct the channels and go again until the CV passes.
+   Then the gate opens.
 
 ## The how-to, in code
 
@@ -61,8 +63,9 @@ The guide shows real files, and they live here.
 | [code/deck.py](code/deck.py) | Layer 2, step 1: the deck in code. Prints the deck so you can compare it with the photo |
 | [code/transfer.py](code/transfer.py) | Layer 2, step 2: the simple transfer and the serial dilution. Simulation unless you pass `--real` |
 | [code/dye_design.py](code/dye_design.py) | Layer 2, step 3: works out the Rhodamine B concentration and how to make it up |
-| [code/read_check.py](code/read_check.py) | Layer 2, step 5: checks a plate read against what the transfer should have made |
-| [code/example_reads/](code/example_reads) | Three synthetic plate reads, not measurements. One has a planted fault |
+| [code/read_check.py](code/read_check.py) | Layer 2, steps 5 and 6: the CV, each channel against the median, and per-channel corrections |
+| [code/example_outputs/](code/example_outputs) | What the commands in the guide print, captured from real runs of the code |
+| [code/example_reads/](code/example_reads) | Synthetic plate reads, not measurements, from a made-up instrument with one channel 15 percent low |
 | [tools/bake.py](tools/bake.py) | Copies the code files into the page. `--check` fails if the page and the files differ |
 | [tools/make_example_reads.py](tools/make_example_reads.py) | Makes the synthetic reads |
 
@@ -78,7 +81,7 @@ python deck.py
 python transfer.py simple
 python transfer.py dilution
 python dye_design.py
-python read_check.py simple example_reads/simple_low_channel.csv --max-off 5
+python read_check.py simple example_reads/simple_low_channel.csv --blank 0.045 --max-cv 5
 ```
 
 Status: every file is tested in simulation with the pinned versions. The real-instrument

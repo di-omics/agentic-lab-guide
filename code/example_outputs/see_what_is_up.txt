@@ -1,0 +1,9 @@
+plate mean 0.787   CV 5.2%
+  channel A:  +0.2% from the median channel
+  channel B:  +0.4% from the median channel
+  channel C:  -0.0% from the median channel
+  channel D:  +0.2% from the median channel
+  channel E:  -0.1% from the median channel
+  channel F: -15.1% from the median channel
+  channel G:  -0.2% from the median channel
+  channel H:  +0.0% from the median channel

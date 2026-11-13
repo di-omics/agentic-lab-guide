@@ -226,7 +226,7 @@
       <div>
         <div class="n">Layer 2</div>
         <div class="t">Bake in expert judgment</div>
-        <p>A picture of the deck, then a QC gate: a liquid transfer, Rhodamine B, a plate read, and a look at the numbers. More is being written.</p>
+        <p>A picture of the deck, then a QC gate: a liquid transfer, Rhodamine B, a plate read, and the CV, readjusted until it passes. More is being written.</p>
       </div>
     </div>
     <p class="note" style="margin-top:22px;font-size:15px">Each chapter walks one instrument through both layers. PyLabRobot keeps a <a href="https://docs.pylabrobot.org/dev/user_guide/machines.html">list of the machines it supports</a>.</p>
@@ -481,7 +481,7 @@ claude mcp add --transport stdio hamilton-star -- \
   <section>
     <p class="eyebrow" id="layer-2">Layer 2</p>
     <h2>Bake in expert judgment.</h2>
-    <p>Getting the instrument to move is layer 1 of the cake. Layer 2 is baking in expert judgment. It starts with a picture of the deck and a QC gate: set up a liquid transfer from the deck, make it a Rhodamine B transfer, read the plate, and see what is up.</p>
+    <p>Getting the instrument to move is layer 1 of the cake. Layer 2 is baking in expert judgment. It starts with a picture of the deck and a QC gate: set up a liquid transfer from the deck, make it a Rhodamine B transfer, read the plate, see what is up, then take the CV of the transfer and readjust.</p>
 
     <div class="step" id="judgment-1" style="margin-top:40px">
       <div class="no">1</div>
@@ -566,7 +566,7 @@ if __name__ == "__main__":
 
     <div class="gate" id="qc-gate">
       <div class="who">The QC gate</div>
-      <p>Before the instrument does real work, it has to show that it moves liquid the way it says it does. Four steps: a liquid transfer, Rhodamine B, a plate read, and a look at the numbers.</p>
+      <p>Before the instrument does real work, it has to show that it moves liquid the way it says it does. Five steps: a liquid transfer, Rhodamine B, a plate read, a look at the numbers, and the CV of the transfer, readjusted until it passes.</p>
     </div>
 
     <div class="step" id="judgment-2">
@@ -582,12 +582,14 @@ eight channels at once. Simulation unless you pass --real.
 
     python transfer.py simple      # 100 uL of dye into every well
     python transfer.py dilution    # a two-fold serial dilution
+    python transfer.py simple --corrections corrections.json
 
 Reservoir column 1 holds the Rhodamine B, column 2 the water, and
 column 12 takes waste.
 """
 import argparse
 import asyncio
+import json
 
 from pylabrobot.resources import Coordinate
 
@@ -606,26 +608,31 @@ def column(plate, number):
     return plate[f"A{number}:H{number}"]
 
 
-async def from_reservoir(lh, reservoir, number, volume):
+async def from_reservoir(lh, reservoir, number, vols):
     well = reservoir[f"A{number}"][0]
-    await lh.aspirate([well] * 8, vols=[volume] * 8,
+    await lh.aspirate([well] * 8, vols=vols,
                       offsets=IN_RESERVOIR, spread="custom")
 
 
-async def to_reservoir(lh, reservoir, number, volume):
+async def to_reservoir(lh, reservoir, number, vols):
     well = reservoir[f"A{number}"][0]
-    await lh.dispense([well] * 8, vols=[volume] * 8,
+    await lh.dispense([well] * 8, vols=vols,
                       offsets=IN_RESERVOIR, spread="custom")
 
 
-async def simple(lh, tips, reservoir, plate):
+async def simple(lh, tips, reservoir, plate, corrections=None):
     """100 uL of dye from reservoir column 1 into every well."""
     reservoir["A1"][0].tracker.set_volume(12000)  # what you loaded, in uL
 
+    # One volume per channel, rows A to H. Corrections come from a read.
+    factors = corrections or {}
+    vols = [round(VOLUME * factors.get(row, 1), 1) for row in "ABCDEFGH"]
+    print("asking each channel for, in uL:", vols)
+
     await lh.pick_up_tips(column(tips, 1))
     for number in range(1, 13):
-        await from_reservoir(lh, reservoir, 1, VOLUME)
-        await lh.dispense(column(plate, number), vols=[VOLUME] * 8)
+        await from_reservoir(lh, reservoir, 1, vols)
+        await lh.dispense(column(plate, number), vols=vols)
     await lh.discard_tips()
 
 
@@ -638,13 +645,13 @@ async def dilution(lh, tips, reservoir, plate):
     # Diluent first: every column after the first, and the blank.
     await lh.pick_up_tips(column(tips, next(tip_column)))
     for number in [*range(2, DILUTION_COLUMNS + 1), BLANK_COLUMN]:
-        await from_reservoir(lh, reservoir, 2, VOLUME)
+        await from_reservoir(lh, reservoir, 2, [VOLUME] * 8)
         await lh.dispense(column(plate, number), vols=[VOLUME] * 8)
     await lh.discard_tips()
 
     # Dye into column 1, twice the final volume.
     await lh.pick_up_tips(column(tips, next(tip_column)))
-    await from_reservoir(lh, reservoir, 1, 2 * VOLUME)
+    await from_reservoir(lh, reservoir, 1, [2 * VOLUME] * 8)
     await lh.dispense(column(plate, 1), vols=[2 * VOLUME] * 8)
 
     # Carry half into the next column, mix, change tips, repeat.
@@ -661,22 +668,28 @@ async def dilution(lh, tips, reservoir, plate):
 
     # Take the extra out of the last column so every well reads alike.
     await lh.aspirate(column(plate, DILUTION_COLUMNS), vols=[VOLUME] * 8)
-    await to_reservoir(lh, reservoir, 12, VOLUME)
+    await to_reservoir(lh, reservoir, 12, [VOLUME] * 8)
     await lh.discard_tips()
 
 
 def report(plate):
     """Print what the plate should now hold, column by column."""
     for number in range(1, 13):
-        volumes = {well.tracker.get_used_volume()
+        volumes = {round(well.tracker.get_used_volume(), 1)
                    for well in column(plate, number)}
         print(f"column {number:2}: {sorted(volumes)} uL")
 
 
-async def main(task: str, real: bool, starlet: bool) -&gt; None:
-    lh, tips, reservoir, plate = await connect(real, starlet)
-    await {"simple": simple, "dilution": dilution}[task](
-        lh, tips, reservoir, plate)
+async def main(args) -&gt; None:
+    lh, tips, reservoir, plate = await connect(args.real, args.starlet)
+    if args.task == "simple":
+        corrections = None
+        if args.corrections:
+            with open(args.corrections) as handle:
+                corrections = json.load(handle)
+        await simple(lh, tips, reservoir, plate, corrections)
+    else:
+        await dilution(lh, tips, reservoir, plate)
     report(plate)
     await lh.stop()
 
@@ -688,8 +701,9 @@ if __name__ == "__main__":
                         help="drive the real instrument")
     parser.add_argument("--starlet", action="store_true",
                         help="the instrument is a STARlet")
-    args = parser.parse_args()
-    asyncio.run(main(args.task, args.real, args.starlet))</pre></div>
+    parser.add_argument("--corrections", metavar="FILE",
+                        help="per-channel corrections from read_check.py")
+    asyncio.run(main(parser.parse_args()))</pre></div>
         <div class="say">
           <div class="who">Say to Claude Code</div>
           <p>Run both transfers in simulation and show me what ends up in each column of the plate.</p>
@@ -759,7 +773,7 @@ if __name__ == "__main__":
     print("The last columns sit near a reader's floor."
           " Check yours can read them.")</pre></div>
         <div class="file"><div class="cap">what it prints</div>
-<pre>Read absorbance near 554 nm, 100 uL per well.
+<pre data-file="code/example_outputs/dye_design.txt">Read absorbance near 554 nm, 100 uL per well.
 Working dye: 24 uM, which is 11.6 ug/mL.
 To make 20 mL: 2.32 mL of 100 ug/mL stock, topped up to 20 mL with water.
 Reservoir: dye in column 1, water in column 2, column 12 empty for waste.
@@ -801,23 +815,28 @@ columns 1 to 12, exactly as the plate looks from above.
     python read_check.py simple reads.csv
     python read_check.py dilution reads.csv
 
-Add --max-cv or --max-off (both in percent) to turn the numbers into a
-pass or a fail. The pass mark is the expert's call.
+Options, all for the expert to set:
+    --blank 0.045        what a well of water reads, taken off first
+    --max-cv 5           fail if the CV is over this many percent
+    --max-off 5          fail if a channel or a step is further off
+    --readjust FILE      write per-channel volume corrections to FILE
 """
 import argparse
 import csv
+import json
 import statistics
 import sys
 
 ROWS = "ABCDEFGH"
 DILUTION_COLUMNS = 6
 BLANK_COLUMN = 12
+MAX_READJUST = 20   # percent. Further off than this needs a person.
 
 
-def load(path):
+def load(path, blank):
     with open(path, newline="") as handle:
         rows = [row for row in csv.reader(handle) if row]
-    grid = [[float(x) for x in row] for row in rows]
+    grid = [[float(x) - blank for x in row] for row in rows]
     if len(grid) != 8 or any(len(row) != 12 for row in grid):
         sys.exit("Expected 8 rows of 12 numbers.")
     return grid
@@ -827,33 +846,44 @@ def percent_off(value, target):
     return 100 * (value - target) / target
 
 
-def simple(grid, max_cv, max_off):
+def simple(grid, args):
     """Every well got the same volume, so every well should read alike."""
     wells = [x for row in grid for x in row]
     mean = statistics.mean(wells)
     cv = 100 * statistics.stdev(wells) / mean
     print(f"plate mean {mean:.3f}   CV {cv:.1f}%")
 
-    worst = 0.0
-    for letter, row in zip(ROWS, grid):
-        off = percent_off(statistics.mean(row), mean)
-        worst = max(worst, abs(off))
-        print(f"  channel {letter}: {off:+5.1f}% from the plate mean")
+    channels = [statistics.mean(row) for row in grid]
+    middle = statistics.median(channels)
+    offs = [percent_off(channel, middle) for channel in channels]
+    for letter, off in zip(ROWS, offs):
+        print(f"  channel {letter}: {off:+5.1f}% from the median channel")
+    worst = max(abs(off) for off in offs)
+
+    if args.readjust:
+        if worst &gt; MAX_READJUST:
+            sys.exit(f"A channel is {worst:.1f}% off. That needs a person"
+                     " at the instrument, not a correction.")
+        factors = {letter: round(middle / channel, 3)
+                   for letter, channel in zip(ROWS, channels)}
+        with open(args.readjust, "w") as handle:
+            json.dump(factors, handle, indent=2)
+        print(f"readjust: wrote {args.readjust}")
 
     failed = []
-    if max_cv is not None and cv &gt; max_cv:
-        failed.append(f"CV {cv:.1f}% is over {max_cv}%")
-    if max_off is not None and worst &gt; max_off:
-        failed.append(f"a channel is {worst:.1f}% off, over {max_off}%")
+    if args.max_cv is not None and cv &gt; args.max_cv:
+        failed.append(f"CV {cv:.1f}% is over {args.max_cv:g}%")
+    if args.max_off is not None and worst &gt; args.max_off:
+        failed.append(f"a channel is {worst:.1f}% off,"
+                      f" over {args.max_off:g}%")
     return failed
 
 
-def dilution(grid, max_cv, max_off):
+def dilution(grid, args):
     """Each column should read half of the one before it."""
     blank = statistics.mean(row[BLANK_COLUMN - 1] for row in grid)
     means = [statistics.mean(row[c] for row in grid) - blank
              for c in range(DILUTION_COLUMNS)]
-    print(f"blank {blank:.3f}")
 
     worst = 0.0
     for c in range(1, DILUTION_COLUMNS):
@@ -864,8 +894,9 @@ def dilution(grid, max_cv, max_off):
               f"   ({off:+5.1f}% from a clean half)")
 
     failed = []
-    if max_off is not None and worst &gt; max_off:
-        failed.append(f"a step is {worst:.1f}% off, over {max_off}%")
+    if args.max_off is not None and worst &gt; args.max_off:
+        failed.append(f"a step is {worst:.1f}% off,"
+                      f" over {args.max_off:g}%")
     return failed
 
 
@@ -873,32 +904,74 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("task", choices=["simple", "dilution"])
     parser.add_argument("reads", help="CSV, 8 rows of 12 numbers")
-    parser.add_argument("--max-cv", type=float, help="percent")
-    parser.add_argument("--max-off", type=float, help="percent")
+    parser.add_argument("--blank", type=float, default=0.0)
+    parser.add_argument("--max-cv", type=float)
+    parser.add_argument("--max-off", type=float)
+    parser.add_argument("--readjust", metavar="FILE")
     args = parser.parse_args()
 
     check = {"simple": simple, "dilution": dilution}[args.task]
-    failed = check(load(args.reads), args.max_cv, args.max_off)
+    failed = check(load(args.reads, args.blank), args)
     if failed:
         sys.exit("FAIL: " + "; ".join(failed))
     if args.max_cv is not None or args.max_off is not None:
         print("PASS")</pre></div>
-        <p>The repository has three example reads to try it on. They are synthetic numbers, not measurements, and one has a planted fault: channel F delivers 15 percent low.</p>
+        <p>The repository has example reads to try it on. They are synthetic numbers, not measurements, from a made-up instrument with one planted fault: channel F delivers 15 percent low.</p>
         <div class="file"><div class="cap">on the Pi</div>
-<pre>python read_check.py simple example_reads/simple_low_channel.csv --max-off 5</pre></div>
+<pre>python read_check.py simple example_reads/simple_low_channel.csv --blank 0.045</pre></div>
         <div class="file"><div class="cap">what it prints</div>
-<pre>plate mean 0.831   CV 5.0%
-  channel A:  +1.9% from the plate mean
-  channel B:  +1.6% from the plate mean
-  channel C:  +2.0% from the plate mean
-  channel D:  +1.9% from the plate mean
-  channel E:  +1.8% from the plate mean
-  channel F: -12.9% from the plate mean
-  channel G:  +1.6% from the plate mean
-  channel H:  +2.2% from the plate mean
-FAIL: a channel is 12.9% off, over 5.0%</pre></div>
-        <p>That is the gate. A plate that fails does not go on to real work, and the numbers say where to look: here, one channel.</p>
-        <p class="note">The 5 is a placeholder. The pass mark is the expert's call.</p>
+<pre data-file="code/example_outputs/see_what_is_up.txt">plate mean 0.787   CV 5.2%
+  channel A:  +0.2% from the median channel
+  channel B:  +0.4% from the median channel
+  channel C:  -0.0% from the median channel
+  channel D:  +0.2% from the median channel
+  channel E:  -0.1% from the median channel
+  channel F: -15.1% from the median channel
+  channel G:  -0.2% from the median channel
+  channel H:  +0.0% from the median channel</pre></div>
+        <p>Seven channels agree. One does not. That is what is up.</p>
+      </div>
+    </div>
+
+    <div class="step" id="judgment-6">
+      <div class="no">6</div>
+      <div class="body">
+        <h3>Liquid transfer CV, and readjust</h3>
+        <p>The number for the gate is the CV of the liquid transfer: how much the wells differ, as a percent of their mean. If it is over the pass mark, readjust and go again.</p>
+        <div class="file"><div class="cap">on the Pi</div>
+<pre>python read_check.py simple example_reads/simple_low_channel.csv \
+  --blank 0.045 --max-cv 5 --readjust corrections.json</pre></div>
+        <div class="file"><div class="cap">what it prints</div>
+<pre data-file="code/example_outputs/cv_and_readjust.txt">plate mean 0.787   CV 5.2%
+  channel A:  +0.2% from the median channel
+  channel B:  +0.4% from the median channel
+  channel C:  -0.0% from the median channel
+  channel D:  +0.2% from the median channel
+  channel E:  -0.1% from the median channel
+  channel F: -15.1% from the median channel
+  channel G:  -0.2% from the median channel
+  channel H:  +0.0% from the median channel
+readjust: wrote corrections.json
+FAIL: CV 5.2% is over 5%</pre></div>
+        <p>The read fails the gate, and the check writes a correction for each channel: ask the low channel for more, so that it delivers what the others do. Run the transfer again with the corrections. It now asks channel F for 117.7 uL. Then read it again.</p>
+        <div class="file"><div class="cap">on the Pi</div>
+<pre>python transfer.py simple --corrections corrections.json
+python read_check.py simple example_reads/simple_readjusted.csv \
+  --blank 0.045 --max-cv 5</pre></div>
+        <div class="file"><div class="cap">what it prints</div>
+<pre data-file="code/example_outputs/read_again.txt">plate mean 0.799   CV 0.9%
+  channel A:  -0.3% from the median channel
+  channel B:  -0.3% from the median channel
+  channel C:  +0.5% from the median channel
+  channel D:  -0.5% from the median channel
+  channel E:  +0.3% from the median channel
+  channel F:  -0.0% from the median channel
+  channel G:  +0.6% from the median channel
+  channel H:  +0.0% from the median channel
+PASS</pre></div>
+        <p>Transfer, read, CV, readjust, until it passes. Then the gate opens.</p>
+        <p class="note">The 5 is a placeholder. The pass mark is the expert's call. A channel more than 20 percent off is not corrected at all: that needs a person at the instrument. The 20 is a placeholder too.</p>
+        <p class="note">Asking a channel for more volume is the simplest readjustment. How the liquid is aspirated and dispensed can be readjusted too.</p>
       </div>
     </div>
 
