@@ -98,7 +98,6 @@
   .tune .w { font-size: 15px; color: var(--soft); }
   .tune .s { font-size: 15px; }
   .tune .head span { font-size: 12px; color: var(--accent); letter-spacing: 0.03em; }
-  .tune .ph { color: var(--faint); }
   .body ul { margin: 0 0 16px; padding-left: 20px; }
   .body li { margin-bottom: 7px; }
 

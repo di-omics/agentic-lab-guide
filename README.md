@@ -48,11 +48,11 @@ then tune.
 | --- | --- | --- |
 | Blowout volume | Sufficient blowout, to ensure proper liquid handling. | For low volume, 20 percent of the volume. |
 | Speed | Maximum speed for everything. Gentler into cells. A forceful dispense for lysis. | Maximum. Into cells, 50 to 70 percent of maximum. |
-| Distance from the bottom, at aspirate | Low enough that the liquid is not missed. | 1 mm. Placeholder. |
-| Distance from the bottom, at dispense | A Z height where every droplet catches the well. Over cells: far enough that the tips do not scrape the cells, close enough that the droplet dips in the well. | 1 mm, and 3 mm over cells. Placeholders. |
+| Distance from the bottom, at aspirate | Low enough that the liquid is not missed. | Start low. |
+| Distance from the bottom, at dispense | A Z height where every droplet catches the well. Over cells: far enough that the tips do not scrape the cells, close enough that the droplet dips in the well. | Start low. Over cells, higher. |
 
-There are no exact speeds here. The top speed differs with the instrument, the tips and the
-liquid, so that number is yours to set.
+There are no exact speeds or heights here. They differ with the instrument, the tips, the
+labware and the liquid, so those numbers are yours to set.
 
 The same parameters are in [code/principles.py](code/principles.py), so your agent can
 read them. Principles first, then the Rhodamine QC: change one parameter, run the plate,
@@ -149,9 +149,9 @@ python read_check.py simple example_reads/simple_low_channel.csv --blank 0.045 -
 Status: every file is tested in simulation with the pinned versions. The real-instrument
 path uses the same calls and has not been run for this guide yet. No dye has been run and no
 plate has been read: the example reads are synthetic, and the Rhodamine B design is a
-calculation from public numbers. In the rulebook, the 3 heights are placeholders for the
-expert to set. The top speed is left for you to set, and a real simple transfer does not
-start without it.
+calculation from public numbers. The rulebook gives no exact speed and no exact
+height: the top speed and the 3 heights are left for you to set, and a real simple
+transfer does not start without them.
 
 ## How this bakes into the rest
 

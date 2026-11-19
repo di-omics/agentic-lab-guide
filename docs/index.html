@@ -108,7 +108,6 @@
   .tune .w { font-size: 15px; color: var(--soft); }
   .tune .s { font-size: 15px; }
   .tune .head span { font-size: 12px; color: var(--accent); letter-spacing: 0.03em; }
-  .tune .ph { color: var(--faint); }
   .body ul { margin: 0 0 16px; padding-left: 20px; }
   .body li { margin-bottom: 7px; }
 
@@ -629,7 +628,7 @@ eight channels at once. Simulation unless you pass --real.
 
 The agent says what the material is. The rulebook in principles.py
 sets the speed, the heights and the blowout. A real simple transfer
-needs your top speed set there first.
+needs your top speed and your heights set there first.
 
 Reservoir column 1 holds the Rhodamine B, column 2 the water, and
 column 12 takes waste.
@@ -642,8 +641,8 @@ import sys
 from pylabrobot.resources import Coordinate
 
 from deck import connect
-from principles import (SET_TOP_SPEED, TOP_SPEED, aspirate_args,
-                        describe, dispense_args, handling)
+from principles import (aspirate_args, describe, dispense_args,
+                        handling, not_set)
 
 VOLUME = 100        # uL in every well at the end
 MIX_CYCLES = 3      # times to draw up and push out when mixing
@@ -678,9 +677,9 @@ async def simple(lh, tips, reservoir, plate, corrections=None,
     # The expert's principles set how the liquid is handled.
     how = handling(material)
     print(describe(material, volume))
-    if TOP_SPEED is None:
-        print(SET_TOP_SPEED)
-        print("Until then, the speed is left to PyLabRobot.")
+    if not_set(material):
+        print(not_set(material))
+        print("Until then, they are left to PyLabRobot.")
 
     # One volume per channel, rows A to H. Corrections come from a read.
     factors = corrections or {}
@@ -741,8 +740,9 @@ def report(plate):
 
 
 async def main(args) -&gt; None:
-    if args.real and args.task == "simple" and TOP_SPEED is None:
-        sys.exit("A real run needs your top speed.\n" + SET_TOP_SPEED)
+    if args.real and args.task == "simple" and not_set(args.material):
+        sys.exit("A real run needs your numbers.\n"
+                 + not_set(args.material))
     lh, tips, reservoir, plate = await connect(args.real, args.starlet)
     if args.task == "simple":
         corrections = None
@@ -803,22 +803,22 @@ python transfer.py dilution    # a two-fold serial dilution</pre></div>
 <pre>python transfer.py simple --material cells</pre></div>
         <div class="file"><div class="cap">the lines to look for</div>
 <pre data-file="code/example_outputs/cells_transfer.txt">cells, 100 uL
-  aspirate at top speed, 1 mm above the bottom
-  dispense at 60 percent of top speed, 3 mm above the bottom
+  aspirate at top speed, height not set
+  dispense at 60 percent of top speed, height not set
   blowout  20 uL
 ...
 Dispensing:
 pip#  vol(ul)  resource             offset           flow rate  blowout    lld_z
-  p0: 100.0    plate_well_A1        0,0,0            None       20.0       3.0
-  p1: 100.0    plate_well_B1        0,0,0            None       20.0       3.0
+  p0: 100.0    plate_well_A1        0,0,0            None       20.0       None
+  p1: 100.0    plate_well_B1        0,0,0            None       20.0       None
 ...</pre></div>
-        <p>The blowout and the height are already in the transfer. The flow rate reads <code>None</code> until you set your top speed in the rulebook. Then the dispense into cells runs at 60 percent of it.</p>
+        <p>The blowout is already in the transfer. The flow rate and the height read <code>None</code> until you set your top speed and your heights in the rulebook. Then the dispense into cells runs at 60 percent of your top speed, at your height over cells.</p>
         <p>The transfer has no speed to argue with, only a material. A material without a principle is refused:</p>
         <div class="file"><div class="cap">on the Pi</div>
 <pre>python transfer.py simple --material blood</pre></div>
         <div class="file"><div class="cap">what it prints</div>
 <pre data-file="code/example_outputs/no_principle.txt">ValueError: No principle for 'blood'. Ask the expert.</pre></div>
-        <p class="note">A real simple transfer does not start until you set your top speed in the rulebook.</p>
+        <p class="note">A real simple transfer does not start until you set your top speed and your heights in the rulebook.</p>
       </div>
     </div>
 
@@ -894,7 +894,7 @@ Simple transfer: every well should read about 0.80 above the blank.
 Serial dilution, columns 1 to 6: 0.800, 0.400, 0.200, 0.100, 0.050, 0.025
 The last columns sit near a reader's floor. Check yours can read them.</pre></div>
         <p class="note">This is a starting point from public numbers: the supplier's extinction coefficient, measured in methanol, and a path of about 0.3 cm for 100 uL. Read the dye once on your own reader and adjust.</p>
-        <p>Load the reservoir, run the transfer once with water, then run it with the dye. The transfers carry the principles from Layer 2. Set your top speed in the rulebook first: a real simple transfer does not start without it. Someone stays at the instrument.</p>
+        <p>Load the reservoir, run the transfer once with water, then run it with the dye. The transfers carry the principles from Layer 2. Set your top speed and your heights in the rulebook first: a real simple transfer does not start without them. Someone stays at the instrument.</p>
         <div class="file"><div class="cap">on the Pi</div>
 <pre>python transfer.py simple --real
 python transfer.py dilution --real</pre></div>

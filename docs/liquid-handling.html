@@ -108,7 +108,6 @@
   .tune .w { font-size: 15px; color: var(--soft); }
   .tune .s { font-size: 15px; }
   .tune .head span { font-size: 12px; color: var(--accent); letter-spacing: 0.03em; }
-  .tune .ph { color: var(--faint); }
   .body ul { margin: 0 0 16px; padding-left: 20px; }
   .body li { margin-bottom: 7px; }
 
@@ -219,10 +218,10 @@
       <div class="head"><span>Tunable parameter</span><span>What the expert wants</span><span>Start here</span></div>
       <div><span class="p">Blowout volume</span><span class="w">Sufficient blowout, to ensure proper liquid handling.</span><span class="s">For low volume, 20 percent of the volume.</span></div>
       <div><span class="p">Speed</span><span class="w">Maximum speed for everything. Gentler into cells. A forceful dispense for lysis.</span><span class="s">Maximum. Into cells, 50 to 70 percent of maximum.</span></div>
-      <div><span class="p">Distance from the bottom, at aspirate</span><span class="w">Low enough that the liquid is not missed.</span><span class="s">1 mm. <span class="ph">Placeholder.</span></span></div>
-      <div><span class="p">Distance from the bottom, at dispense</span><span class="w">A Z height where every droplet catches the well. Over cells: far enough that the tips do not scrape the cells, close enough that the droplet dips in the well.</span><span class="s">1 mm, and 3 mm over cells. <span class="ph">Placeholders.</span></span></div>
+      <div><span class="p">Distance from the bottom, at aspirate</span><span class="w">Low enough that the liquid is not missed.</span><span class="s">Start low.</span></div>
+      <div><span class="p">Distance from the bottom, at dispense</span><span class="w">A Z height where every droplet catches the well. Over cells: far enough that the tips do not scrape the cells, close enough that the droplet dips in the well.</span><span class="s">Start low. Over cells, higher.</span></div>
     </div>
-    <p class="note">There are no exact speeds here. The top speed differs with the instrument, the tips and the liquid, so that number is yours to set. A height marked placeholder is the expert's to set for the tips and the labware.</p>
+    <p class="note">There are no exact speeds or heights here. They differ with the instrument, the tips, the labware and the liquid, so those numbers are yours to set.</p>
     <p>You do not always need an optimizer. Instead of fine-tuning with Bayesian optimization, use an expert-guided approach, and fine-tune to the level that is appropriate for the biological material.</p>
   </section>
 
@@ -237,30 +236,26 @@ You do not always need an optimizer. Start with regular parameters and
 maximum speed for everything, then fine-tune to the level that is
 appropriate for the biological material.
 
-The numbers below are the tunable parameters: the blowout volume, the
-speed and the distance from the bottom. Use them as a starting
-principle for what would work, then tune them on your own instrument.
+These are the tunable parameters: the blowout volume, the speed and
+the distance from the bottom. Use them as a starting principle for
+what would work, then tune them on your own instrument.
 
-There is no exact speed here. Speed is a share of the top speed, and
-the top speed differs with the instrument, the tips and the liquid.
-Set yours in TOP_SPEED.
-
-The words are the expert's. A number marked PLACEHOLDER is the
-expert's to set for the instrument, the tips and the labware.
+There are no exact speeds or heights here. Speed is a share of the
+top speed. The top speed and the heights differ with the instrument,
+the tips, the labware and the liquid, so they are yours to set. A
+real run needs them.
 
     python principles.py
 """
 from dataclasses import dataclass
+from typing import Optional
 
-TOP_SPEED = None             # uL/s. Yours to set. A real run needs it.
-BLOWOUT_SHARE = 0.20         # blowout air, as a share of the volume
-CELLS_SPEED_SHARE = 0.60     # 50 to 70 percent of the top speed
-ASPIRATE_HEIGHT = 1.0        # mm above the bottom. PLACEHOLDER
-DISPENSE_HEIGHT = 1.0        # mm above the bottom. PLACEHOLDER
-CELLS_DISPENSE_HEIGHT = 3.0  # mm above the bottom. PLACEHOLDER
-
-SET_TOP_SPEED = ("TOP_SPEED is not set. It differs with the instrument,"
-                 " the tips\nand the liquid. Set yours in principles.py.")
+TOP_SPEED = None              # uL/s. Yours to set.
+ASPIRATE_HEIGHT = None        # mm above the bottom. Yours to set.
+DISPENSE_HEIGHT = None        # mm above the bottom. Yours to set.
+CELLS_DISPENSE_HEIGHT = None  # mm above the bottom. Yours to set.
+BLOWOUT_SHARE = 0.20          # blowout air, as a share of the volume
+CELLS_SPEED_SHARE = 0.60      # 50 to 70 percent of the top speed
 
 EVERY_TRANSFER = (
     "Start with regular parameters, maximum speed for everything.",
@@ -272,10 +267,10 @@ CATCH = "Dispense at a Z height where every droplet catches the well."
 
 @dataclass(frozen=True)
 class Handling:
-    aspirate_speed: float    # a share of the top speed
-    aspirate_height: float
-    dispense_speed: float    # a share of the top speed
-    dispense_height: float
+    aspirate_speed: float              # a share of the top speed
+    aspirate_height: Optional[float]   # mm above the bottom
+    dispense_speed: float              # a share of the top speed
+    dispense_height: Optional[float]   # mm above the bottom
     why: tuple
 
 
@@ -299,12 +294,29 @@ def handling(material: str) -&gt; Handling:
                     EVERY_TRANSFER + why)
 
 
-def _args(share: float, height: float, vols):
-    how = {"liquid_height": [height] * len(vols),
-           "blow_out_air_volume": [BLOWOUT_SHARE * v for v in vols]}
+def not_set(material: str = "") -&gt; str:
+    """Say which of your numbers this material still needs."""
+    names = ["TOP_SPEED", "ASPIRATE_HEIGHT", "DISPENSE_HEIGHT",
+             "CELLS_DISPENSE_HEIGHT"]
+    if material == "cells":
+        names.remove("DISPENSE_HEIGHT")
+    elif material:
+        names.remove("CELLS_DISPENSE_HEIGHT")
+    missing = [name for name in names if globals()[name] is None]
+    if not missing:
+        return ""
+    return ("Not set: " + ", ".join(missing) + ".\n"
+            "They differ with the instrument, the tips, the labware and"
+            " the\nliquid. Set yours in principles.py.")
+
+
+def _args(share: float, height: Optional[float], vols):
+    how = {"blow_out_air_volume": [BLOWOUT_SHARE * v for v in vols]}
+    if height is not None:
+        how["liquid_height"] = [height] * len(vols)
     if TOP_SPEED is not None:
         how["flow_rates"] = [share * TOP_SPEED] * len(vols)
-    return how    # with no top speed, the speed is left to PyLabRobot
+    return how    # what is not set is left to PyLabRobot
 
 
 def aspirate_args(h: Handling, vols):
@@ -323,14 +335,20 @@ def speed(share: float) -&gt; str:
     return f"{words}, {share * TOP_SPEED:g} uL/s"
 
 
+def height(mm: Optional[float]) -&gt; str:
+    if mm is None:
+        return "height not set"
+    return f"{mm:g} mm above the bottom"
+
+
 def describe(material: str, volume: float) -&gt; str:
     h = handling(material)
     lines = [
         f"{material}, {volume:g} uL",
         f"  aspirate at {speed(h.aspirate_speed)},"
-        f" {h.aspirate_height:g} mm above the bottom",
+        f" {height(h.aspirate_height)}",
         f"  dispense at {speed(h.dispense_speed)},"
-        f" {h.dispense_height:g} mm above the bottom",
+        f" {height(h.dispense_height)}",
         f"  blowout  {BLOWOUT_SHARE * volume:g} uL",
     ]
     return "\n".join(lines + [f"  - {reason}" for reason in h.why])
@@ -340,14 +358,14 @@ if __name__ == "__main__":
     for material in ("regular", "cells", "lysis"):
         print(describe(material, 100))
         print()
-    if TOP_SPEED is None:
-        print(SET_TOP_SPEED)</pre></div>
+    if not_set():
+        print(not_set())</pre></div>
     <div class="file"><div class="cap">run it</div>
 <pre>python principles.py</pre></div>
     <div class="file"><div class="cap">what it prints</div>
 <pre data-file="code/example_outputs/principles.txt">regular, 100 uL
-  aspirate at top speed, 1 mm above the bottom
-  dispense at top speed, 1 mm above the bottom
+  aspirate at top speed, height not set
+  dispense at top speed, height not set
   blowout  20 uL
   - Start with regular parameters, maximum speed for everything.
   - Sufficient blowout volume, to ensure proper liquid handling.
@@ -355,8 +373,8 @@ if __name__ == "__main__":
   - Dispense at a Z height where every droplet catches the well.
 
 cells, 100 uL
-  aspirate at top speed, 1 mm above the bottom
-  dispense at 60 percent of top speed, 3 mm above the bottom
+  aspirate at top speed, height not set
+  dispense at 60 percent of top speed, height not set
   blowout  20 uL
   - Start with regular parameters, maximum speed for everything.
   - Sufficient blowout volume, to ensure proper liquid handling.
@@ -366,8 +384,8 @@ cells, 100 uL
   - Close enough that the droplet dips in the well.
 
 lysis, 100 uL
-  aspirate at top speed, 1 mm above the bottom
-  dispense at top speed, 1 mm above the bottom
+  aspirate at top speed, height not set
+  dispense at top speed, height not set
   blowout  20 uL
   - Start with regular parameters, maximum speed for everything.
   - Sufficient blowout volume, to ensure proper liquid handling.
@@ -375,12 +393,13 @@ lysis, 100 uL
   - A forceful dispense for lysis.
   - Dispense at a Z height where every droplet catches the well.
 
-TOP_SPEED is not set. It differs with the instrument, the tips
-and the liquid. Set yours in principles.py.</pre></div>
-    <p>The top speed is yours to set, and a real run does not start without it. Have your agent show you what your instrument allows.</p>
+Not set: TOP_SPEED, ASPIRATE_HEIGHT, DISPENSE_HEIGHT, CELLS_DISPENSE_HEIGHT.
+They differ with the instrument, the tips, the labware and the
+liquid. Set yours in principles.py.</pre></div>
+    <p>The top speed and the heights are yours to set, and a real run does not start without them. Have your agent show you what your instrument and your labware allow.</p>
     <div class="say">
       <div class="who">Say to Claude Code</div>
-      <p>Read the PyLabRobot source you installed. What speeds does it allow for my instrument and my tips, and what does its own liquid class use? Show me where you read each number. I will pick the top speed.</p>
+      <p>Read the PyLabRobot source you installed. What speeds does it allow for my instrument and my tips, and what does its own liquid class use? How deep are the wells of my labware? Show me where you read each number. I will pick the top speed and the heights.</p>
     </div>
     <p>To use the rulebook in your own harness, hand it to your agent.</p>
     <div class="say">

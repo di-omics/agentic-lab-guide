@@ -4,30 +4,26 @@ You do not always need an optimizer. Start with regular parameters and
 maximum speed for everything, then fine-tune to the level that is
 appropriate for the biological material.
 
-The numbers below are the tunable parameters: the blowout volume, the
-speed and the distance from the bottom. Use them as a starting
-principle for what would work, then tune them on your own instrument.
+These are the tunable parameters: the blowout volume, the speed and
+the distance from the bottom. Use them as a starting principle for
+what would work, then tune them on your own instrument.
 
-There is no exact speed here. Speed is a share of the top speed, and
-the top speed differs with the instrument, the tips and the liquid.
-Set yours in TOP_SPEED.
-
-The words are the expert's. A number marked PLACEHOLDER is the
-expert's to set for the instrument, the tips and the labware.
+There are no exact speeds or heights here. Speed is a share of the
+top speed. The top speed and the heights differ with the instrument,
+the tips, the labware and the liquid, so they are yours to set. A
+real run needs them.
 
     python principles.py
 """
 from dataclasses import dataclass
+from typing import Optional
 
-TOP_SPEED = None             # uL/s. Yours to set. A real run needs it.
-BLOWOUT_SHARE = 0.20         # blowout air, as a share of the volume
-CELLS_SPEED_SHARE = 0.60     # 50 to 70 percent of the top speed
-ASPIRATE_HEIGHT = 1.0        # mm above the bottom. PLACEHOLDER
-DISPENSE_HEIGHT = 1.0        # mm above the bottom. PLACEHOLDER
-CELLS_DISPENSE_HEIGHT = 3.0  # mm above the bottom. PLACEHOLDER
-
-SET_TOP_SPEED = ("TOP_SPEED is not set. It differs with the instrument,"
-                 " the tips\nand the liquid. Set yours in principles.py.")
+TOP_SPEED = None              # uL/s. Yours to set.
+ASPIRATE_HEIGHT = None        # mm above the bottom. Yours to set.
+DISPENSE_HEIGHT = None        # mm above the bottom. Yours to set.
+CELLS_DISPENSE_HEIGHT = None  # mm above the bottom. Yours to set.
+BLOWOUT_SHARE = 0.20          # blowout air, as a share of the volume
+CELLS_SPEED_SHARE = 0.60      # 50 to 70 percent of the top speed
 
 EVERY_TRANSFER = (
     "Start with regular parameters, maximum speed for everything.",
@@ -39,10 +35,10 @@ CATCH = "Dispense at a Z height where every droplet catches the well."
 
 @dataclass(frozen=True)
 class Handling:
-    aspirate_speed: float    # a share of the top speed
-    aspirate_height: float
-    dispense_speed: float    # a share of the top speed
-    dispense_height: float
+    aspirate_speed: float              # a share of the top speed
+    aspirate_height: Optional[float]   # mm above the bottom
+    dispense_speed: float              # a share of the top speed
+    dispense_height: Optional[float]   # mm above the bottom
     why: tuple
 
 
@@ -66,12 +62,29 @@ def handling(material: str) -> Handling:
                     EVERY_TRANSFER + why)
 
 
-def _args(share: float, height: float, vols):
-    how = {"liquid_height": [height] * len(vols),
-           "blow_out_air_volume": [BLOWOUT_SHARE * v for v in vols]}
+def not_set(material: str = "") -> str:
+    """Say which of your numbers this material still needs."""
+    names = ["TOP_SPEED", "ASPIRATE_HEIGHT", "DISPENSE_HEIGHT",
+             "CELLS_DISPENSE_HEIGHT"]
+    if material == "cells":
+        names.remove("DISPENSE_HEIGHT")
+    elif material:
+        names.remove("CELLS_DISPENSE_HEIGHT")
+    missing = [name for name in names if globals()[name] is None]
+    if not missing:
+        return ""
+    return ("Not set: " + ", ".join(missing) + ".\n"
+            "They differ with the instrument, the tips, the labware and"
+            " the\nliquid. Set yours in principles.py.")
+
+
+def _args(share: float, height: Optional[float], vols):
+    how = {"blow_out_air_volume": [BLOWOUT_SHARE * v for v in vols]}
+    if height is not None:
+        how["liquid_height"] = [height] * len(vols)
     if TOP_SPEED is not None:
         how["flow_rates"] = [share * TOP_SPEED] * len(vols)
-    return how    # with no top speed, the speed is left to PyLabRobot
+    return how    # what is not set is left to PyLabRobot
 
 
 def aspirate_args(h: Handling, vols):
@@ -90,14 +103,20 @@ def speed(share: float) -> str:
     return f"{words}, {share * TOP_SPEED:g} uL/s"
 
 
+def height(mm: Optional[float]) -> str:
+    if mm is None:
+        return "height not set"
+    return f"{mm:g} mm above the bottom"
+
+
 def describe(material: str, volume: float) -> str:
     h = handling(material)
     lines = [
         f"{material}, {volume:g} uL",
         f"  aspirate at {speed(h.aspirate_speed)},"
-        f" {h.aspirate_height:g} mm above the bottom",
+        f" {height(h.aspirate_height)}",
         f"  dispense at {speed(h.dispense_speed)},"
-        f" {h.dispense_height:g} mm above the bottom",
+        f" {height(h.dispense_height)}",
         f"  blowout  {BLOWOUT_SHARE * volume:g} uL",
     ]
     return "\n".join(lines + [f"  - {reason}" for reason in h.why])
@@ -107,5 +126,5 @@ if __name__ == "__main__":
     for material in ("regular", "cells", "lysis"):
         print(describe(material, 100))
         print()
-    if TOP_SPEED is None:
-        print(SET_TOP_SPEED)
+    if not_set():
+        print(not_set())
