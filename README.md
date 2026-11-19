@@ -2,12 +2,32 @@
 
 **From an instrument to an instrument driven by an agent.**
 
-A step-by-step guide to putting an AI agent in the driver's seat of a real lab instrument.
-The path is universal. Chapter one walks it with a Hamilton STAR.
+A step-by-step guide to putting an AI agent in the driver's seat of a real lab instrument,
+and getting it to perform at the scientist's bar. The path is universal. Chapter one walks
+it with a Hamilton STAR.
 
 Written by Di Hu. Draft, November 2026.
 
 **Read the guide: [di-omics.github.io/agentic-lab-guide](https://di-omics.github.io/agentic-lab-guide/)**
+
+## From a scientist to one who trains robots
+
+How do you go from being a scientist to one who trains robots to scale science at the
+expert's bar? The walk is the same for any instrument.
+
+1. **Reverse engineer your instrument.** First, get to where software can drive it.
+   PyLabRobot already drives the Hamilton STAR. For an instrument with no published
+   automation API, see
+   [plr-reverse-engineer](https://github.com/di-omics/plr-reverse-engineer).
+2. **Talk to it through an agentic harness.** Through what matters to you: your own
+   protocols, your own Claude Code, whatever you are comfortable with.
+3. **Let it drive the instrument.** With your protocol taken into consideration.
+4. **First pass.** The deck layout, the protocol, the basic steps.
+5. **Second pass.** Go into the deck. With the tips in place, how do you want this to go?
+   The blowout volume, the speed and the distance from the bottom are all
+   [tunable parameters](#the-tunable-parameters).
+
+Steps 1 to 3 are Layer 1. The 2 passes are Layer 2.
 
 ## 2+ layers of cake
 
@@ -28,7 +48,7 @@ is good for biological validation.
 
 ## Chapter 01: Hamilton STAR and STARlet
 
-**Layer 1, get it going.** Five steps:
+**Layer 1, get it going.** 5 steps:
 
 1. Start with a Raspberry Pi.
 2. Get it connected and configured on your network.
@@ -37,17 +57,36 @@ is good for biological validation.
 5. Make an MCP that connects your company's context to the instrument.
 
 **Layer 2, bake in expert judgment.** You do not always need an optimizer. Instead of
-fine-tuning with Bayesian optimization, use an expert-guided approach.
+fine-tuning with Bayesian optimization, use an expert-guided approach. It takes 2 passes.
+
+First pass, the deck layout, the protocol, the basic steps:
 
 1. Take a picture of the deck, so Claude Code can code in where the tip carriers and plate
    carriers are.
 2. Set up a liquid transfer from the deck: a simple transfer, 100 uL from a 12-well
-   reservoir into a 96-well plate, and a serial dilution.
-3. Fine-tune with the expert's principles. Start with regular parameters, maximum speed for
-   everything. Then: sufficient blowout volume; a low enough aspirate height that the liquid
-   is not missed; a Z height at dispense where every droplet catches the well; into cells, a
-   gentler speed and a distance where the tips do not scrape the cells; for lysis, a forceful
-   dispense.
+   reservoir into a 96-well plate, and a serial dilution. Your own protocol goes in the
+   same way.
+
+Second pass, go into the deck:
+
+3. Fine-tune with the expert's principles. With the tips in place, how do you want this to
+   go? By the physics of the tip, the liquid might hang as a drop. Start with regular
+   parameters, maximum speed for everything, then tune.
+
+### The tunable parameters
+
+An expert's guide to liquid handling. Use it as a starting principle for what would work,
+then tune it on your own instrument, with your own tips and labware.
+
+| Tunable parameter | What the expert wants | Start here |
+| --- | --- | --- |
+| Blowout volume | Sufficient blowout, to ensure proper liquid handling. | For low volume, 20 percent of the volume. |
+| Speed | Maximum speed for everything. Gentler into cells. A forceful dispense for lysis. | Maximum. Into cells, 50 to 70 percent of maximum. |
+| Distance from the bottom, at aspirate | Low enough that the liquid is not missed. | 1 mm. Placeholder. |
+| Distance from the bottom, at dispense | A Z height where every droplet catches the well. Over cells: far enough that the tips do not scrape the cells, close enough that the droplet dips in the well. | 1 mm, and 3 mm over cells. Placeholders. |
+
+The same parameters are in [code/principles.py](code/principles.py), so your agent can
+read them.
 
 **Layer 3, the Rhodamine QC.**
 
@@ -96,7 +135,7 @@ python read_check.py simple example_reads/simple_low_channel.csv --blank 0.045 -
 Status: every file is tested in simulation with the pinned versions. The real-instrument
 path uses the same calls and has not been run for this guide yet. No dye has been run and no
 plate has been read: the example reads are synthetic, and the Rhodamine B design is a
-calculation from public numbers. In the rulebook, the top speed and the three heights are
+calculation from public numbers. In the rulebook, the top speed and the 3 heights are
 placeholders for the expert to set.
 
 ## Stay at the instrument

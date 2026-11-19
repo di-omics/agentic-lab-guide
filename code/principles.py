@@ -4,6 +4,10 @@ You do not always need an optimizer. Start with regular parameters and
 maximum speed for everything, then fine-tune to the level that is
 appropriate for the biological material.
 
+The numbers below are the tunable parameters: the blowout volume, the
+speed and the distance from the bottom. Use them as a starting
+principle for what would work, then tune them on your own instrument.
+
 The words are the expert's. A number marked PLACEHOLDER is the
 expert's to set for the instrument, the tips and the labware.
 

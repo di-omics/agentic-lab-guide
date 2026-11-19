@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Agentic Lab Guide</title>
 <meta name="author" content="Di Hu">
-<meta name="description" content="How to go from an instrument to an instrument driven by an agent. The path is universal. Chapter one walks it with a Hamilton STAR and STARlet.">
+<meta name="description" content="How to go from an instrument to an instrument driven by an agent, performing at the scientist's bar. The path is universal. Chapter one walks it with a Hamilton STAR and STARlet.">
 <meta name="color-scheme" content="light">
 <style>
   :root {
@@ -95,6 +95,19 @@
   .cake .d { font-size: 15px; color: var(--soft); }
   .guide { margin-top: 24px; }
   .guide b { font-weight: 400; color: var(--accent); }
+
+  /* the walk */
+  .cake.walk > div { grid-template-columns: 40px 230px 1fr; }
+
+  /* passes and tunable parameters */
+  .pass { font-size: 13px; color: var(--accent); margin: 44px 0 12px; }
+  .tune { border-top: 1px solid var(--line); margin: 20px 0 16px; }
+  .tune > div { display: grid; grid-template-columns: 150px 1fr 160px; gap: 0 18px; padding: 14px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .tune .p { font-size: 15px; font-weight: 400; }
+  .tune .w { font-size: 15px; color: var(--soft); }
+  .tune .s { font-size: 15px; }
+  .tune .head span { font-size: 12px; color: var(--accent); letter-spacing: 0.03em; }
+  .tune .ph { color: var(--faint); }
   .body ul { margin: 0 0 16px; padding-left: 20px; }
   .body li { margin-bottom: 7px; }
 
@@ -160,6 +173,11 @@
     .link .wire { width: 1px; height: 30px; margin: 0 auto 6px; }
     .link .wire::after { right: -3px; top: auto; bottom: -1px; transform: rotate(135deg); }
     .cake > div { grid-template-columns: 1fr; gap: 2px; }
+    .cake.walk > div { grid-template-columns: 28px 1fr; }
+    .cake.walk .d { grid-column: 2; }
+    .tune > div { grid-template-columns: 1fr; gap: 3px; }
+    .tune .head { display: none; }
+    .tune .s::before { content: "Start here: "; font-size: 12px; color: var(--accent); letter-spacing: 0.03em; }
     .layers { grid-template-columns: 1fr; }
     .layers > div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
     .chapter h2 { font-size: 28px; }
@@ -180,7 +198,7 @@
   <div class="cover">
     <p class="kicker">Chapter one &middot; Hamilton STAR and STARlet</p>
     <h1>From an instrument to an instrument driven by an agent.</h1>
-    <p class="lede">A step-by-step guide to putting an AI agent in the driver's seat of a real lab instrument. The path is universal. Chapter one walks it with a Hamilton STAR.</p>
+    <p class="lede">A step-by-step guide to putting an AI agent in the driver's seat of a real lab instrument, and getting it to perform at the scientist's bar. The path is universal. Chapter one walks it with a Hamilton STAR.</p>
     <p class="byline">Written by <b>Di Hu</b> &middot; Draft, November 2026</p>
   </div>
 
@@ -225,6 +243,20 @@
   </div>
 
   <section>
+    <p class="eyebrow">The walk</p>
+    <h2>From a scientist to one who trains robots.</h2>
+    <p>How do you go from being a scientist to one who trains robots to scale science at the expert's bar? The walk is the same for any instrument.</p>
+    <div class="cake walk">
+      <div><span class="n">1</span><span class="t">Reverse engineer your instrument</span><span class="d">First, get to where software can drive it. PyLabRobot already drives the Hamilton STAR. For an instrument with no published automation API, see <a href="https://github.com/di-omics/plr-reverse-engineer">plr-reverse-engineer</a>.</span></div>
+      <div><span class="n">2</span><span class="t">Talk to it through an agentic harness</span><span class="d">Through what matters to you: your own protocols, your own Claude Code, whatever you are comfortable with.</span></div>
+      <div><span class="n">3</span><span class="t">Let it drive the instrument</span><span class="d">With your protocol taken into consideration.</span></div>
+      <div><span class="n">4</span><span class="t">First pass</span><span class="d">The deck layout, the protocol, the basic steps.</span></div>
+      <div><span class="n">5</span><span class="t">Second pass</span><span class="d">Go into the deck. With the tips in place, how do you want this to go? The blowout volume, the speed and the distance from the bottom are all <a href="#tunable">tunable parameters</a>.</span></div>
+    </div>
+    <p class="note" style="margin-top:22px;font-size:15px">Steps 1 to 3 are <a href="#layer-1">Layer 1</a>. The 2 passes are <a href="#layer-2">Layer 2</a>.</p>
+  </section>
+
+  <section>
     <p class="eyebrow">How this guide works</p>
     <h2>2+ layers of cake.</h2>
     <p>It is universal. Whatever the instrument, the path is the same: plug it into a Raspberry Pi, drive it with <a href="https://docs.pylabrobot.org">PyLabRobot</a>, and make an MCP that connects your company's context to it. That is layer 1 of the cake. Layer 2 is baking in expert judgment. And there are more layers of cake than two.</p>
@@ -247,7 +279,7 @@
   <section>
     <p class="eyebrow" id="layer-1">Layer 1</p>
     <h2>Get it going.</h2>
-    <p>Five steps: a Raspberry Pi, your network, one cable, Claude Code, and an MCP.</p>
+    <p>5 steps: a Raspberry Pi, your network, one cable, Claude Code, and an MCP.</p>
 
     <h3 style="margin-top:34px">What you need</h3>
     <table>
@@ -288,7 +320,7 @@ sudo apt install -y git python3-venv</pre>
       <div class="body">
         <h3>Cable the Hamilton to the Pi</h3>
         <p>Connect the USB-A to USB-B cable: flat plug into the Pi, square plug into the Hamilton. Power the Hamilton on.</p>
-        <p>Let users on the Pi talk to USB devices. Add these two lines to <code>/etc/udev/rules.d/99-usb.rules</code>:</p>
+        <p>Let users on the Pi talk to USB devices. Add these 2 lines to <code>/etc/udev/rules.d/99-usb.rules</code>:</p>
 <pre>SUBSYSTEM=="usb", MODE="0666"
 SUBSYSTEM=="tty", MODE="0666"</pre>
         <p>Then reload the rules and check that the Pi can see the instrument:</p>
@@ -489,8 +521,10 @@ claude mcp add --transport stdio hamilton-star -- \
     <h2>Bake in expert judgment.</h2>
     <p>Getting the instrument to move is layer 1 of the cake. Layer 2 is baking in expert judgment. There is tacit knowledge to bake in.</p>
     <p>You do not always need an optimizer. Instead of fine-tuning with Bayesian optimization, use an expert-guided approach, and fine-tune to the level that is appropriate for the biological material.</p>
+    <p>It takes 2 passes. The first pass gets the deck layout, the protocol and the basic steps. In the second pass you go into the deck and think about how you want each step to go, with the tips in place.</p>
 
-    <div class="step" id="judgment-1" style="margin-top:40px">
+    <p class="pass">First pass &middot; the deck layout, the protocol, the basic steps</p>
+    <div class="step" id="judgment-1">
       <div class="no">1</div>
       <div class="body">
         <h3>Take a picture of the deck</h3>
@@ -575,7 +609,7 @@ if __name__ == "__main__":
       <div class="no">2</div>
       <div class="body">
         <h3>Set up a liquid transfer from the deck</h3>
-        <p>Have a source and a destination 96-well plate, and move liquid between them. Two transfers to start: a simple transfer, 100 uL from a 12-well reservoir into every well of the plate, and a serial dilution.</p>
+        <p>Have a source and a destination 96-well plate, and move liquid between them. 2 transfers to start: a simple transfer, 100 uL from a 12-well reservoir into every well of the plate, and a serial dilution.</p>
         <div class="file"><div class="cap">code/transfer.py</div>
 <pre data-file="code/transfer.py">"""Layer 2 transfers: a simple transfer and a serial dilution.
 
@@ -731,22 +765,30 @@ if __name__ == "__main__":
 <pre>python transfer.py simple      # 100 uL into every well
 python transfer.py dilution    # a two-fold serial dilution</pre></div>
         <p>In simulation, PyLabRobot keeps count of every tip and every microliter. Plant a mistake to see it: in <code>simple</code>, change <code>12000</code> to <code>5000</code> and run it again. The plate needs 9,600 uL, so the run stops with <code>Not enough liquid in container</code>.</p>
-        <p class="note">The dilution runs across six columns, with column 12 as the blank. Six is a starting point. The dye design in Layer 3 decides how far the series can go.</p>
+        <p class="note">The dilution runs across 6 columns, with column 12 as the blank. That is a starting point. The dye design in Layer 3 decides how far the series can go.</p>
+        <p>These 2 transfers are the basic steps. Your own protocol goes in the same way: the agent takes the protocol into consideration and writes its steps as transfers on this deck.</p>
+        <div class="say">
+          <div class="who">Say to Claude Code</div>
+          <p>Here is my protocol. Write its basic steps as transfers on this deck: what moves, from where, to where, and how much. Run it in simulation and show me what ends up in each well.</p>
+        </div>
       </div>
     </div>
 
+    <p class="pass">Second pass &middot; go into the deck</p>
     <div class="step" id="judgment-3">
       <div class="no">3</div>
       <div class="body">
         <h3>Fine-tune with the expert's principles</h3>
-        <p>Start with regular parameters, maximum speed for everything. Then:</p>
-        <ul>
-          <li>Sufficient blowout volume, to ensure proper liquid handling. For low volume, 20 percent.</li>
-          <li>A low enough aspirate height that the liquid is not missed.</li>
-          <li>A Z height at dispense where every droplet catches the well.</li>
-          <li>Into cells: a gentler speed, 50 to 70 percent of maximum, and a distance where the tips do not scrape the cells but the droplet still dips in the well.</li>
-          <li>For lysis: a forceful dispense.</li>
-        </ul>
+        <p>Now go into the deck and think it through. When you do this experiment, with the tips in place, how do you want this to go? By the physics of the tip, the liquid might hang as a drop. So you want a certain degree of blowout volume, a certain degree of speed, and a certain distance from the bottom. All of these are tunable parameters.</p>
+        <p>Start with regular parameters, maximum speed for everything. Then tune:</p>
+        <div class="tune" id="tunable">
+          <div class="head"><span>Tunable parameter</span><span>What the expert wants</span><span>Start here</span></div>
+          <div><span class="p">Blowout volume</span><span class="w">Sufficient blowout, to ensure proper liquid handling.</span><span class="s">For low volume, 20 percent of the volume.</span></div>
+          <div><span class="p">Speed</span><span class="w">Maximum speed for everything. Gentler into cells. A forceful dispense for lysis.</span><span class="s">Maximum. Into cells, 50 to 70 percent of maximum.</span></div>
+          <div><span class="p">Distance from the bottom, at aspirate</span><span class="w">Low enough that the liquid is not missed.</span><span class="s">1 mm. <span class="ph">Placeholder.</span></span></div>
+          <div><span class="p">Distance from the bottom, at dispense</span><span class="w">A Z height where every droplet catches the well. Over cells: far enough that the tips do not scrape the cells, close enough that the droplet dips in the well.</span><span class="s">1 mm, and 3 mm over cells. <span class="ph">Placeholders.</span></span></div>
+        </div>
+        <p>This is an expert's guide to liquid handling. Use it as a starting principle for what would work, then tune it on your own instrument, with your own tips and labware.</p>
         <p>These go into a rulebook. The agent says what the material is. The rulebook sets the speed, the heights and the blowout.</p>
         <div class="file"><div class="cap">code/principles.py</div>
 <pre data-file="code/principles.py">"""Expert-guided fine-tuning, as a rulebook.
@@ -754,6 +796,10 @@ python transfer.py dilution    # a two-fold serial dilution</pre></div>
 You do not always need an optimizer. Start with regular parameters and
 maximum speed for everything, then fine-tune to the level that is
 appropriate for the biological material.
+
+The numbers below are the tunable parameters: the blowout volume, the
+speed and the distance from the bottom. Use them as a starting
+principle for what would work, then tune them on your own instrument.
 
 The words are the expert's. A number marked PLACEHOLDER is the
 expert's to set for the instrument, the tips and the labware.
@@ -890,7 +936,12 @@ pip#  vol(ul)  resource             offset           flow rate  blowout    lld_z
 <pre>python transfer.py simple --material blood</pre></div>
         <div class="file"><div class="cap">what it prints</div>
 <pre data-file="code/example_outputs/no_principle.txt">ValueError: No principle for 'blood'. Ask the expert.</pre></div>
-        <p class="note">The numbers marked PLACEHOLDER in the rulebook are the expert's to set for the instrument, the tips and the labware: the top speed and the three heights.</p>
+        <p class="note">The numbers marked PLACEHOLDER in the rulebook are the expert's to set for the instrument, the tips and the labware: the top speed and the 3 heights.</p>
+        <p>To use the rulebook in your own harness, hand it to your agent.</p>
+        <div class="say">
+          <div class="who">Say to Claude Code</div>
+          <p>Read <code>code/principles.py</code> in the Agentic Lab Guide. Use it as the starting point for every transfer you write for my instrument. Before anything runs, show me the blowout, the speed and the distance from the bottom for each step, and tell me which numbers I still have to set.</p>
+        </div>
       </div>
     </div>
 
@@ -899,7 +950,7 @@ pip#  vol(ul)  resource             offset           flow rate  blowout    lld_z
   <section>
     <p class="eyebrow" id="layer-3">Layer 3</p>
     <h2>The Rhodamine QC.</h2>
-    <p>Principles first, then the Rhodamine QC. Before the instrument does real work, it has to show that it moves liquid the way it says it does. Four steps: Rhodamine B transfers, a plate read, a look at the numbers, and the CV of the liquid transfer, readjusted until it passes.</p>
+    <p>Principles first, then the Rhodamine QC. Before the instrument does real work, it has to show that it moves liquid the way it says it does. 4 steps: Rhodamine B transfers, a plate read, a look at the numbers, and the CV of the liquid transfer, readjusted until it passes.</p>
 
     <div class="step" id="qc-1" style="margin-top:40px">
       <div class="no">1</div>
@@ -909,7 +960,7 @@ pip#  vol(ul)  resource             offset           flow rate  blowout    lld_z
         <p>Claude will design this for you.</p>
         <div class="say">
           <div class="who">Say to Claude Code</div>
-          <p>My plate reader is a &lt;model&gt;. Design the Rhodamine B for these two transfers: the wavelength, the concentration so that 100 uL in a 96-well plate reads in the middle of the reader's linear range, how to make it up from my stock, and what goes in which reservoir column.</p>
+          <p>My plate reader is a &lt;model&gt;. Design the Rhodamine B for these 2 transfers: the wavelength, the concentration so that 100 uL in a 96-well plate reads in the middle of the reader's linear range, how to make it up from my stock, and what goes in which reservoir column.</p>
         </div>
         <div class="file"><div class="cap">code/dye_design.py</div>
 <pre data-file="code/dye_design.py">"""Design the Rhodamine B for the QC transfers.
@@ -1114,7 +1165,7 @@ if __name__ == "__main__":
   channel F: -15.1% from the median channel
   channel G:  -0.2% from the median channel
   channel H:  +0.0% from the median channel</pre></div>
-        <p>Seven channels agree. One does not. That is what is up.</p>
+        <p>7 channels agree. One does not. That is what is up.</p>
       </div>
     </div>
 
