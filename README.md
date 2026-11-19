@@ -10,6 +10,8 @@ Written by Di Hu. Draft, November 2026.
 
 **Read the guide: [di-omics.github.io/agentic-lab-guide](https://di-omics.github.io/agentic-lab-guide/)**
 
+**Liquid handling, a part of its own: [di-omics.github.io/agentic-lab-guide/liquid-handling](https://di-omics.github.io/agentic-lab-guide/liquid-handling)**
+
 ## From a scientist to one who trains robots
 
 How do you go from being a scientist to one who trains robots to scale science at the
@@ -25,14 +27,41 @@ expert's bar? The walk is the same for any instrument.
 4. **First pass.** The deck layout, the protocol, the basic steps.
 5. **Second pass.** Go into the deck. With the tips in place, how do you want this to go?
    The blowout volume, the speed and the distance from the bottom are all
-   [tunable parameters](#the-tunable-parameters).
+   [tunable parameters](#liquid-handling).
 
 Steps 1 to 3 are Layer 1. The 2 passes are Layer 2.
+
+## Liquid handling
+
+A part of its own, for any liquid handler: an expert's guide to tuning one. Use it as a
+starting principle for what would work, then tune it on your own instrument, with your own
+tips and labware. It has
+[its own page](https://di-omics.github.io/agentic-lab-guide/liquid-handling).
+
+Go into the deck and think it through. With the tips in place, how do you want this to go?
+By the physics of the tip, the liquid might hang as a drop. So you want a certain degree of
+blowout volume, a certain degree of speed, and a certain distance from the bottom. All of
+these are tunable parameters. Start with regular parameters, maximum speed for everything,
+then tune.
+
+| Tunable parameter | What the expert wants | Start here |
+| --- | --- | --- |
+| Blowout volume | Sufficient blowout, to ensure proper liquid handling. | For low volume, 20 percent of the volume. |
+| Speed | Maximum speed for everything. Gentler into cells. A forceful dispense for lysis. | Maximum. Into cells, 50 to 70 percent of maximum. |
+| Distance from the bottom, at aspirate | Low enough that the liquid is not missed. | 1 mm. Placeholder. |
+| Distance from the bottom, at dispense | A Z height where every droplet catches the well. Over cells: far enough that the tips do not scrape the cells, close enough that the droplet dips in the well. | 1 mm, and 3 mm over cells. Placeholders. |
+
+There are no exact speeds here. The top speed differs with the instrument, the tips and the
+liquid, so that number is yours to set.
+
+The same parameters are in [code/principles.py](code/principles.py), so your agent can
+read them. Principles first, then the Rhodamine QC: change one parameter, run the plate,
+and read it again.
 
 ## 2+ layers of cake
 
 It is universal. Whatever the instrument, the path is the same: plug it into a Raspberry Pi,
-drive it with [PyLabRobot](https://docs.pylabrobot.org), and make an MCP that connects your
+or any computer that can stay with it, drive it with [PyLabRobot](https://docs.pylabrobot.org), and make an MCP that connects your
 company's context to it. That is layer 1 of the cake. Layer 2 is baking in expert judgment. And
 there are more layers of cake than two.
 
@@ -50,7 +79,7 @@ is good for biological validation.
 
 **Layer 1, get it going.** 5 steps:
 
-1. Start with a Raspberry Pi.
+1. Start with a Raspberry Pi, or any computer that can stay with the instrument.
 2. Get it connected and configured on your network.
 3. Cable the Hamilton to the Pi with a USB-A to USB-B cable.
 4. Have Claude Code install PyLabRobot and write the driving approach.
@@ -69,27 +98,9 @@ First pass, the deck layout, the protocol, the basic steps:
 
 Second pass, go into the deck:
 
-3. Fine-tune with the expert's principles. With the tips in place, how do you want this to
-   go? By the physics of the tip, the liquid might hang as a drop. Start with regular
-   parameters, maximum speed for everything, then tune.
-
-### The tunable parameters
-
-An expert's guide to liquid handling. Use it as a starting principle for what would work,
-then tune it on your own instrument, with your own tips and labware.
-
-| Tunable parameter | What the expert wants | Start here |
-| --- | --- | --- |
-| Blowout volume | Sufficient blowout, to ensure proper liquid handling. | For low volume, 20 percent of the volume. |
-| Speed | Maximum speed for everything. Gentler into cells. A forceful dispense for lysis. | Maximum. Into cells, 50 to 70 percent of maximum. |
-| Distance from the bottom, at aspirate | Low enough that the liquid is not missed. | 1 mm. Placeholder. |
-| Distance from the bottom, at dispense | A Z height where every droplet catches the well. Over cells: far enough that the tips do not scrape the cells, close enough that the droplet dips in the well. | 1 mm, and 3 mm over cells. Placeholders. |
-
-There are no exact speeds in this guide. The top speed differs with the instrument, the
-tips and the liquid, so that number is yours to set.
-
-The same parameters are in [code/principles.py](code/principles.py), so your agent can
-read them.
+3. Fine-tune with the expert's principles: apply the [liquid handling](#liquid-handling)
+   part on this deck. The agent says what the material is, and the rulebook sets the
+   speed, the heights and the blowout.
 
 **Layer 3, the Rhodamine QC.**
 
@@ -111,12 +122,12 @@ The guide shows real files, and they live here.
 | [code/instrument_mcp.py](code/instrument_mcp.py) | Layer 1: an MCP server that offers the instrument to Claude Code. Simulation unless `STAR_REAL=1` |
 | [code/deck.py](code/deck.py) | Layer 2: the deck in code. Prints the deck so you can compare it with the photo |
 | [code/transfer.py](code/transfer.py) | Layer 2: the simple transfer and the serial dilution. It takes a material, not a speed |
-| [code/principles.py](code/principles.py) | Layer 2: the expert's principles as a rulebook. It sets the speed as a share of your top speed, the heights and the blowout |
+| [code/principles.py](code/principles.py) | Liquid handling: the expert's principles as a rulebook. It sets the speed as a share of your top speed, the heights and the blowout |
 | [code/dye_design.py](code/dye_design.py) | Layer 3: works out the Rhodamine B concentration and how to make it up |
 | [code/read_check.py](code/read_check.py) | Layer 3: the CV, each channel against the median, and per-channel corrections |
 | [code/example_reads/](code/example_reads) | Synthetic plate reads, not measurements, from a made-up instrument with one channel 15 percent low |
 | [code/example_outputs/](code/example_outputs) | What the commands in the guide print, captured from real runs of the code |
-| [tools/bake.py](tools/bake.py) | Copies the code and the outputs into the page. `--check` fails if they differ |
+| [tools/bake.py](tools/bake.py) | Copies the code, the outputs and the stylesheet into the pages. `--check` fails if they differ |
 | [tools/make_example_reads.py](tools/make_example_reads.py) | Makes the synthetic reads |
 
 Try it with no instrument at all:
@@ -162,7 +173,9 @@ use the driver at your own risk and that warranty is between you and your vendor
 
 ## Layout
 
-- `docs/index.html` -- the guide itself, a single page with no dependencies. Open it in a
-  browser.
+- `docs/index.html` -- the guide itself. Open it in a browser.
+- `docs/liquid-handling.html` -- the liquid handling part, on its own page.
+- `shared/style.css` -- the one stylesheet. It is baked into each page, so every page opens
+  on its own, with no dependencies.
 - `code/` -- the files the guide shows.
-- `tools/bake.py` -- keeps the page and the code identical.
+- `tools/bake.py` -- keeps the pages, the code and the stylesheet identical.

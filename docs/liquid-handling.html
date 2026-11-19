@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liquid handling - Agentic Lab Guide</title>
+<meta name="author" content="Di Hu">
+<meta name="description" content="An expert's guide to tuning a liquid handler: the blowout volume, the speed and the distance from the bottom. A starting principle for what would work.">
+<meta name="color-scheme" content="light">
+<style data-file="shared/style.css">
+  :root {
+    --ground: #fcfcfb;
+    --ink: #2b2f36;
+    --soft: #6b7280;
+    --faint: #9aa0a8;
+    --line: #e4e4e0;
+    --accent: #5b7089;
+    --wash: #f6f6f3;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 300;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 720px; margin: 0 auto; padding: 0 24px 96px; }
+
+  /* top bar */
+  .bar {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 28px 0 18px; border-bottom: 1px solid var(--line);
+    font-size: 13px; letter-spacing: 0.02em; color: var(--soft);
+  }
+  .bar a { color: var(--soft); text-decoration: none; }
+  .bar a:hover { color: var(--accent); }
+
+  /* cover */
+  .cover { padding: 84px 0 56px; }
+  .kicker { font-size: 13px; color: var(--accent); margin: 0 0 22px; }
+  h1 {
+    font-weight: 200; font-size: 46px; line-height: 1.14;
+    letter-spacing: -0.01em; margin: 0 0 26px; text-wrap: balance;
+  }
+  .lede { font-size: 20px; line-height: 1.55; color: var(--soft); margin: 0; max-width: 34em; }
+  .byline { margin-top: 34px; font-size: 14px; color: var(--faint); }
+  .byline b { font-weight: 400; color: var(--ink); }
+
+  /* path diagram */
+  .path {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    padding: 40px 0 36px; margin: 0 0 72px;
+  }
+  .node { flex: 0 0 auto; width: 150px; text-align: center; }
+  .node svg { display: block; margin: 0 auto 14px; }
+  .node .name { font-size: 15px; font-weight: 400; }
+  .node .what { font-size: 13px; color: var(--soft); line-height: 1.45; margin-top: 4px; }
+  .link { flex: 1 1 auto; text-align: center; padding-top: 30px; min-width: 60px; }
+  .link .wire { height: 1px; background: var(--accent); opacity: 0.55; margin: 0 6px 8px; position: relative; }
+  .link .wire::after {
+    content: ""; position: absolute; right: -1px; top: -3px;
+    width: 6px; height: 6px; border-top: 1px solid var(--accent); border-right: 1px solid var(--accent);
+    transform: rotate(45deg);
+  }
+  .link .label { font-size: 12px; color: var(--accent); letter-spacing: 0.03em; }
+
+  /* sections */
+  h2 { font-weight: 200; font-size: 30px; line-height: 1.2; margin: 0 0 14px; }
+  h3 { font-weight: 400; font-size: 19px; margin: 0 0 8px; }
+  p { margin: 0 0 16px; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(91,112,137,0.3); }
+  a:hover { border-bottom-color: var(--accent); }
+  section { margin: 0 0 72px; }
+  .eyebrow { font-size: 13px; color: var(--accent); margin: 0 0 10px; }
+  .note { color: var(--soft); }
+
+  /* two layers */
+  .layers { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); margin-top: 26px; }
+  .layers > div { padding: 22px 24px 4px 0; }
+  .layers > div + div { padding-left: 24px; border-left: 1px solid var(--line); }
+  .layers .n { font-size: 13px; color: var(--accent); }
+  .layers .t { font-size: 19px; font-weight: 400; margin: 2px 0 6px; }
+  .layers p { font-size: 15px; color: var(--soft); }
+
+  .cake { border-top: 1px solid var(--line); margin-top: 26px; }
+  .cake > div { display: grid; grid-template-columns: 76px 220px 1fr; gap: 0 16px; padding: 16px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .cake .n { font-size: 13px; color: var(--accent); }
+  .cake .t { font-size: 17px; font-weight: 400; }
+  .cake .d { font-size: 15px; color: var(--soft); }
+  .guide { margin-top: 24px; }
+  .guide b { font-weight: 400; color: var(--accent); }
+
+  /* the walk */
+  .cake.walk > div { grid-template-columns: 40px 230px 1fr; }
+  .cake.rest > div { grid-template-columns: 104px 190px 1fr; }
+
+  /* passes and tunable parameters */
+  .pass { font-size: 13px; color: var(--accent); margin: 44px 0 12px; }
+  .tune { border-top: 1px solid var(--line); margin: 20px 0 16px; }
+  .tune > div { display: grid; grid-template-columns: 150px 1fr 160px; gap: 0 18px; padding: 14px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+  .tune .p { font-size: 15px; font-weight: 400; }
+  .tune .w { font-size: 15px; color: var(--soft); }
+  .tune .s { font-size: 15px; }
+  .tune .head span { font-size: 12px; color: var(--accent); letter-spacing: 0.03em; }
+  .tune .ph { color: var(--faint); }
+  .body ul { margin: 0 0 16px; padding-left: 20px; }
+  .body li { margin-bottom: 7px; }
+
+  /* chapter head */
+  .chapter { border-top: 1px solid var(--ink); padding-top: 18px; margin-bottom: 44px; }
+  .chapter .num { font-size: 13px; color: var(--soft); }
+  .chapter h2 { font-size: 36px; margin-top: 6px; }
+
+  /* needs table */
+  table { width: 100%; border-collapse: collapse; margin: 18px 0 8px; font-size: 15px; }
+  td { padding: 12px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 1px solid var(--line); }
+  td:first-child { width: 42%; padding-right: 20px; font-weight: 400; }
+  td:last-child { color: var(--soft); }
+
+  /* steps */
+  .step { display: grid; grid-template-columns: 64px 1fr; padding: 34px 0 18px; border-top: 1px solid var(--line); }
+  .step .no { font-weight: 200; font-size: 40px; line-height: 1; color: var(--accent); }
+  .step .body { min-width: 0; }
+  .step .body > p:last-child { margin-bottom: 0; }
+  pre {
+    margin: 14px 0 18px; padding: 14px 16px; overflow-x: auto;
+    background: var(--wash); border: 1px solid var(--line); border-radius: 3px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 13.5px; line-height: 1.6; color: var(--ink);
+  }
+  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.86em; white-space: nowrap; }
+  .file { margin: 14px 0 18px; }
+  .file .cap {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px; color: var(--soft); margin-bottom: 6px;
+  }
+  .file pre { margin: 0; font-size: 12.5px; }
+  .say { margin: 16px 0 18px; padding: 2px 0 2px 18px; border-left: 1px solid var(--accent); }
+  .say .who { font-size: 12px; color: var(--accent); letter-spacing: 0.03em; margin-bottom: 4px; }
+  .say p { margin: 0; font-size: 16px; }
+
+  .done { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 22px 0; margin-top: 8px; }
+  .done .who { font-size: 13px; color: var(--accent); margin-bottom: 4px; }
+  .done p { margin: 0; }
+
+  .gate { border-top: 1px solid var(--ink); padding: 18px 0 6px; margin-top: 44px; }
+  .gate .who { font-size: 13px; color: var(--accent); margin-bottom: 4px; }
+  .gate p { margin: 0 0 12px; }
+  .safety { font-size: 15px; color: var(--soft); padding: 18px 0 0; }
+  .safety b { font-weight: 400; color: var(--ink); }
+
+  .open { border: 1px dashed #cfcfca; border-radius: 3px; padding: 26px 24px; color: var(--soft); font-size: 15px; }
+  .open b { font-weight: 400; color: var(--ink); }
+
+  footer { border-top: 1px solid var(--line); padding-top: 22px; font-size: 13px; color: var(--faint); }
+  footer a { color: var(--soft); }
+
+  @media (max-width: 620px) {
+    body { font-size: 16px; }
+    .page { padding: 0 20px 72px; }
+    .cover { padding: 56px 0 40px; }
+    h1 { font-size: 34px; }
+    .lede { font-size: 18px; }
+    .path { flex-direction: column; align-items: center; padding: 32px 0 28px; margin-bottom: 56px; }
+    .node { width: 220px; }
+    .link { padding: 14px 0; min-width: 0; }
+    .link .wire { width: 1px; height: 30px; margin: 0 auto 6px; }
+    .link .wire::after { right: -3px; top: auto; bottom: -1px; transform: rotate(135deg); }
+    .cake > div { grid-template-columns: 1fr; gap: 2px; }
+    .cake.rest > div { grid-template-columns: 1fr; }
+    .cake.walk > div { grid-template-columns: 28px 1fr; }
+    .cake.walk .d { grid-column: 2; }
+    .tune > div { grid-template-columns: 1fr; gap: 3px; }
+    .tune .head { display: none; }
+    .tune .s::before { content: "Start here: "; font-size: 12px; color: var(--accent); letter-spacing: 0.03em; }
+    .layers { grid-template-columns: 1fr; }
+    .layers > div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); }
+    .chapter h2 { font-size: 28px; }
+    .step { grid-template-columns: 44px 1fr; }
+    .step .no { font-size: 30px; }
+    td:first-child { width: 46%; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="bar">
+    <a href="index.html">Agentic Lab Guide</a>
+    <span>Liquid handling &nbsp;&middot;&nbsp; <a href="https://github.com/di-omics">Di Hu</a></span>
+  </div>
+
+  <div class="cover">
+    <p class="kicker">A part of its own &middot; for any liquid handler</p>
+    <h1>Liquid handling at the scientist's bar.</h1>
+    <p class="lede">An expert's guide to tuning a liquid handler: the blowout volume, the speed and the distance from the bottom. Use it as a starting principle for what would work, then tune it on your own instrument.</p>
+    <p class="byline">Written by <b>Di Hu</b> &middot; Draft, November 2026</p>
+  </div>
+
+  <section>
+    <p class="eyebrow">The second pass</p>
+    <h2>Go into the deck.</h2>
+    <p>The first pass of a protocol gets the deck layout, the protocol and the basic steps. Then you go into the deck and think it through. When you do this experiment, with the tips in place, how do you want this to go?</p>
+    <p>By the physics of the tip, the liquid might hang as a drop. So you want a certain degree of blowout volume, a certain degree of speed, and a certain distance from the bottom. All of these are tunable parameters.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow" id="tunable">The tunable parameters</p>
+    <h2>Where to start.</h2>
+    <p>Start with regular parameters, maximum speed for everything. Then tune:</p>
+    <div class="tune">
+      <div class="head"><span>Tunable parameter</span><span>What the expert wants</span><span>Start here</span></div>
+      <div><span class="p">Blowout volume</span><span class="w">Sufficient blowout, to ensure proper liquid handling.</span><span class="s">For low volume, 20 percent of the volume.</span></div>
+      <div><span class="p">Speed</span><span class="w">Maximum speed for everything. Gentler into cells. A forceful dispense for lysis.</span><span class="s">Maximum. Into cells, 50 to 70 percent of maximum.</span></div>
+      <div><span class="p">Distance from the bottom, at aspirate</span><span class="w">Low enough that the liquid is not missed.</span><span class="s">1 mm. <span class="ph">Placeholder.</span></span></div>
+      <div><span class="p">Distance from the bottom, at dispense</span><span class="w">A Z height where every droplet catches the well. Over cells: far enough that the tips do not scrape the cells, close enough that the droplet dips in the well.</span><span class="s">1 mm, and 3 mm over cells. <span class="ph">Placeholders.</span></span></div>
+    </div>
+    <p class="note">There are no exact speeds here. The top speed differs with the instrument, the tips and the liquid, so that number is yours to set. A height marked placeholder is the expert's to set for the tips and the labware.</p>
+    <p>You do not always need an optimizer. Instead of fine-tuning with Bayesian optimization, use an expert-guided approach, and fine-tune to the level that is appropriate for the biological material.</p>
+  </section>
+
+  <section>
+    <p class="eyebrow" id="rulebook">The rulebook</p>
+    <h2>The same parameters, in code.</h2>
+    <p>These go into a rulebook. The agent says what the material is. The rulebook sets the speed, the heights and the blowout.</p>
+    <div class="file"><div class="cap">code/principles.py</div>
+<pre data-file="code/principles.py">"""Expert-guided fine-tuning, as a rulebook.
+
+You do not always need an optimizer. Start with regular parameters and
+maximum speed for everything, then fine-tune to the level that is
+appropriate for the biological material.
+
+The numbers below are the tunable parameters: the blowout volume, the
+speed and the distance from the bottom. Use them as a starting
+principle for what would work, then tune them on your own instrument.
+
+There is no exact speed here. Speed is a share of the top speed, and
+the top speed differs with the instrument, the tips and the liquid.
+Set yours in TOP_SPEED.
+
+The words are the expert's. A number marked PLACEHOLDER is the
+expert's to set for the instrument, the tips and the labware.
+
+    python principles.py
+"""
+from dataclasses import dataclass
+
+TOP_SPEED = None             # uL/s. Yours to set. A real run needs it.
+BLOWOUT_SHARE = 0.20         # blowout air, as a share of the volume
+CELLS_SPEED_SHARE = 0.60     # 50 to 70 percent of the top speed
+ASPIRATE_HEIGHT = 1.0        # mm above the bottom. PLACEHOLDER
+DISPENSE_HEIGHT = 1.0        # mm above the bottom. PLACEHOLDER
+CELLS_DISPENSE_HEIGHT = 3.0  # mm above the bottom. PLACEHOLDER
+
+SET_TOP_SPEED = ("TOP_SPEED is not set. It differs with the instrument,"
+                 " the tips\nand the liquid. Set yours in principles.py.")
+
+EVERY_TRANSFER = (
+    "Start with regular parameters, maximum speed for everything.",
+    "Sufficient blowout volume, to ensure proper liquid handling.",
+    "Aspirate low enough that the liquid is not missed.",
+)
+CATCH = "Dispense at a Z height where every droplet catches the well."
+
+
+@dataclass(frozen=True)
+class Handling:
+    aspirate_speed: float    # a share of the top speed
+    aspirate_height: float
+    dispense_speed: float    # a share of the top speed
+    dispense_height: float
+    why: tuple
+
+
+def handling(material: str) -&gt; Handling:
+    """What the expert would set for this material."""
+    if material == "regular":
+        speed, height, why = 1.0, DISPENSE_HEIGHT, (CATCH,)
+    elif material == "cells":
+        speed = CELLS_SPEED_SHARE
+        height = CELLS_DISPENSE_HEIGHT
+        why = ("Gentler into cells: 50 to 70 percent of maximum speed.",
+               "Far enough that the tips do not scrape the cells.",
+               "Close enough that the droplet dips in the well.")
+    elif material == "lysis":
+        speed, height = 1.0, DISPENSE_HEIGHT
+        why = ("A forceful dispense for lysis.", CATCH)
+    else:
+        raise ValueError(
+            f"No principle for {material!r}. Ask the expert.")
+    return Handling(1.0, ASPIRATE_HEIGHT, speed, height,
+                    EVERY_TRANSFER + why)
+
+
+def _args(share: float, height: float, vols):
+    how = {"liquid_height": [height] * len(vols),
+           "blow_out_air_volume": [BLOWOUT_SHARE * v for v in vols]}
+    if TOP_SPEED is not None:
+        how["flow_rates"] = [share * TOP_SPEED] * len(vols)
+    return how    # with no top speed, the speed is left to PyLabRobot
+
+
+def aspirate_args(h: Handling, vols):
+    return _args(h.aspirate_speed, h.aspirate_height, vols)
+
+
+def dispense_args(h: Handling, vols):
+    return _args(h.dispense_speed, h.dispense_height, vols)
+
+
+def speed(share: float) -&gt; str:
+    words = ("top speed" if share == 1
+             else f"{share * 100:g} percent of top speed")
+    if TOP_SPEED is None:
+        return words
+    return f"{words}, {share * TOP_SPEED:g} uL/s"
+
+
+def describe(material: str, volume: float) -&gt; str:
+    h = handling(material)
+    lines = [
+        f"{material}, {volume:g} uL",
+        f"  aspirate at {speed(h.aspirate_speed)},"
+        f" {h.aspirate_height:g} mm above the bottom",
+        f"  dispense at {speed(h.dispense_speed)},"
+        f" {h.dispense_height:g} mm above the bottom",
+        f"  blowout  {BLOWOUT_SHARE * volume:g} uL",
+    ]
+    return "\n".join(lines + [f"  - {reason}" for reason in h.why])
+
+
+if __name__ == "__main__":
+    for material in ("regular", "cells", "lysis"):
+        print(describe(material, 100))
+        print()
+    if TOP_SPEED is None:
+        print(SET_TOP_SPEED)</pre></div>
+    <div class="file"><div class="cap">run it</div>
+<pre>python principles.py</pre></div>
+    <div class="file"><div class="cap">what it prints</div>
+<pre data-file="code/example_outputs/principles.txt">regular, 100 uL
+  aspirate at top speed, 1 mm above the bottom
+  dispense at top speed, 1 mm above the bottom
+  blowout  20 uL
+  - Start with regular parameters, maximum speed for everything.
+  - Sufficient blowout volume, to ensure proper liquid handling.
+  - Aspirate low enough that the liquid is not missed.
+  - Dispense at a Z height where every droplet catches the well.
+
+cells, 100 uL
+  aspirate at top speed, 1 mm above the bottom
+  dispense at 60 percent of top speed, 3 mm above the bottom
+  blowout  20 uL
+  - Start with regular parameters, maximum speed for everything.
+  - Sufficient blowout volume, to ensure proper liquid handling.
+  - Aspirate low enough that the liquid is not missed.
+  - Gentler into cells: 50 to 70 percent of maximum speed.
+  - Far enough that the tips do not scrape the cells.
+  - Close enough that the droplet dips in the well.
+
+lysis, 100 uL
+  aspirate at top speed, 1 mm above the bottom
+  dispense at top speed, 1 mm above the bottom
+  blowout  20 uL
+  - Start with regular parameters, maximum speed for everything.
+  - Sufficient blowout volume, to ensure proper liquid handling.
+  - Aspirate low enough that the liquid is not missed.
+  - A forceful dispense for lysis.
+  - Dispense at a Z height where every droplet catches the well.
+
+TOP_SPEED is not set. It differs with the instrument, the tips
+and the liquid. Set yours in principles.py.</pre></div>
+    <p>The top speed is yours to set, and a real run does not start without it. Have your agent show you what your instrument allows.</p>
+    <div class="say">
+      <div class="who">Say to Claude Code</div>
+      <p>Read the PyLabRobot source you installed. What speeds does it allow for my instrument and my tips, and what does its own liquid class use? Show me where you read each number. I will pick the top speed.</p>
+    </div>
+    <p>To use the rulebook in your own harness, hand it to your agent.</p>
+    <div class="say">
+      <div class="who">Say to Claude Code</div>
+      <p>Read <code>code/principles.py</code> in the Agentic Lab Guide. Use it as the starting point for every transfer you write for my instrument. Before anything runs, show me the blowout, the speed and the distance from the bottom for each step, and tell me which numbers I still have to set.</p>
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow" id="check">Check it</p>
+    <h2>Principles first, then the Rhodamine QC.</h2>
+    <p>These principles first, then the Rhodamine QC. If it looks good, it is good for biological validation.</p>
+    <p>The QC makes the liquid something a plate reader can see, and gives you one number: the CV of the liquid transfer. To tune, change one parameter, run the plate, and read it again.</p>
+    <div class="done">
+      <div class="who">Where it goes next</div>
+      <p><a href="index.html#judgment-3">Chapter 01</a> of the guide applies these on a Hamilton STAR. <a href="index.html#layer-3">Layer 3</a> is the Rhodamine QC.</p>
+    </div>
+  </section>
+
+  <footer>
+    Agentic Lab Guide &middot; written by Di Hu &middot; <a href="https://github.com/di-omics">github.com/di-omics</a>
+  </footer>
+
+</div>
+</body>
+</html>

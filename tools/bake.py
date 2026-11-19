@@ -1,10 +1,12 @@
-"""Bake the code files into the guide page.
+"""Bake the code files and the stylesheet into the guide pages.
 
 The guide shows the real files from code/. This script copies them into
-docs/index.html, into every <pre data-file="..."> block.
+every page in docs/, into every <pre data-file="..."> block. It also
+copies the one stylesheet into every <style data-file="..."> block, so
+each page opens on its own.
 
-    python3 tools/bake.py          # write the page
-    python3 tools/bake.py --check  # fail if the page and the files differ
+    python3 tools/bake.py          # write the pages
+    python3 tools/bake.py --check  # fail if a page and the files differ
 """
 import html
 import pathlib
@@ -12,8 +14,10 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-PAGE = ROOT / "docs" / "index.html"
+PAGES = sorted((ROOT / "docs").glob("*.html"))
 BLOCK = re.compile(r'(<pre data-file="([^"]+)">)(.*?)(</pre>)', re.DOTALL)
+STYLE = re.compile(r'(<style data-file="([^"]+)">\n)(.*?)(</style>)',
+                   re.DOTALL)
 
 
 def baked(page: str) -> str:
@@ -21,21 +25,31 @@ def baked(page: str) -> str:
         source = (ROOT / match.group(2)).read_text().rstrip("\n")
         return match.group(1) + html.escape(source, quote=False) + match.group(4)
 
-    return BLOCK.sub(fill, page)
+    def style(match: re.Match) -> str:
+        return match.group(1) + (ROOT / match.group(2)).read_text() + match.group(4)
+
+    return STYLE.sub(style, BLOCK.sub(fill, page))
 
 
 def main() -> int:
-    current = PAGE.read_text()
-    wanted = baked(current)
-    files = [m.group(2) for m in BLOCK.finditer(current)]
-    if "--check" in sys.argv:
-        if current != wanted:
-            print("The page is stale. Run: python3 tools/bake.py")
-            return 1
-        print(f"The page matches {len(files)} code files.")
-        return 0
-    PAGE.write_text(wanted)
-    print(f"Baked {len(files)} code files into docs/index.html: {', '.join(files)}")
+    check = "--check" in sys.argv
+    stale = []
+    for path in PAGES:
+        current = path.read_text()
+        wanted = baked(current)
+        files = {m.group(2) for m in BLOCK.finditer(current)}
+        files |= {m.group(2) for m in STYLE.finditer(current)}
+        name = path.relative_to(ROOT)
+        if not check:
+            path.write_text(wanted)
+            print(f"Baked {len(files)} files into {name}.")
+        elif current != wanted:
+            stale.append(str(name))
+        else:
+            print(f"{name} matches {len(files)} files.")
+    if stale:
+        print("Stale: " + ", ".join(stale) + ". Run: python3 tools/bake.py")
+        return 1
     return 0
 
 

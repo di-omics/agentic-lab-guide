@@ -7,7 +7,7 @@
 <meta name="author" content="Di Hu">
 <meta name="description" content="How to go from an instrument to an instrument driven by an agent, performing at the scientist's bar. The path is universal. Chapter one walks it with a Hamilton STAR and STARlet.">
 <meta name="color-scheme" content="light">
-<style>
+<style data-file="shared/style.css">
   :root {
     --ground: #fcfcfb;
     --ink: #2b2f36;
@@ -194,7 +194,7 @@
 
   <div class="bar">
     <span>Agentic Lab Guide</span>
-    <a href="https://github.com/di-omics">Di Hu</a>
+    <span><a href="liquid-handling.html">Liquid handling</a> &nbsp;&middot;&nbsp; <a href="https://github.com/di-omics">Di Hu</a></span>
   </div>
 
   <div class="cover">
@@ -204,7 +204,7 @@
     <p class="byline">Written by <b>Di Hu</b> &middot; Draft, November 2026</p>
   </div>
 
-  <div class="path" role="img" aria-label="Claude Code, holding your company's context, reaches a Raspberry Pi through an MCP. The Pi runs PyLabRobot and drives the instrument over a cable.">
+  <div class="path" role="img" aria-label="Claude Code, holding your company's context, reaches a Raspberry Pi, or another computer, through an MCP. It runs PyLabRobot and drives the instrument over a cable.">
     <div class="node">
       <svg width="72" height="56" viewBox="0 0 72 56" fill="none" stroke="#6b7280" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
         <rect x="14" y="8" width="44" height="30" rx="2"/>
@@ -225,7 +225,7 @@
         <circle cx="15" cy="41" r="1.4"/><circle cx="48" cy="41" r="1.4"/>
       </svg>
       <div class="name">Raspberry Pi</div>
-      <div class="what">runs PyLabRobot</div>
+      <div class="what">or another computer, running PyLabRobot</div>
     </div>
     <div class="link"><div class="wire"></div><div class="label">cable</div></div>
     <div class="node">
@@ -253,15 +253,19 @@
       <div><span class="n">2</span><span class="t">Talk to it through an agentic harness</span><span class="d">Through what matters to you: your own protocols, your own Claude Code, whatever you are comfortable with.</span></div>
       <div><span class="n">3</span><span class="t">Let it drive the instrument</span><span class="d">With your protocol taken into consideration.</span></div>
       <div><span class="n">4</span><span class="t">First pass</span><span class="d">The deck layout, the protocol, the basic steps.</span></div>
-      <div><span class="n">5</span><span class="t">Second pass</span><span class="d">Go into the deck. With the tips in place, how do you want this to go? The blowout volume, the speed and the distance from the bottom are all <a href="#tunable">tunable parameters</a>.</span></div>
+      <div><span class="n">5</span><span class="t">Second pass</span><span class="d">Go into the deck. With the tips in place, how do you want this to go? The blowout volume, the speed and the distance from the bottom are all <a href="liquid-handling.html">tunable parameters</a>.</span></div>
     </div>
     <p class="note" style="margin-top:22px;font-size:15px">Steps 1 to 3 are <a href="#layer-1">Layer 1</a>. The 2 passes are <a href="#layer-2">Layer 2</a>.</p>
+    <div class="done" style="margin-top:28px">
+      <div class="who">A part of its own</div>
+      <p><a href="liquid-handling.html">Liquid handling</a>: an expert's guide to the tunable parameters. The blowout volume, the speed and the distance from the bottom, and where to start with each.</p>
+    </div>
   </section>
 
   <section>
     <p class="eyebrow">How this guide works</p>
     <h2>2+ layers of cake.</h2>
-    <p>It is universal. Whatever the instrument, the path is the same: plug it into a Raspberry Pi, drive it with <a href="https://docs.pylabrobot.org">PyLabRobot</a>, and make an MCP that connects your company's context to it. That is layer 1 of the cake. Layer 2 is baking in expert judgment. And there are more layers of cake than two.</p>
+    <p>It is universal. Whatever the instrument, the path is the same: plug it into a Raspberry Pi, or any computer that can stay with it, drive it with <a href="https://docs.pylabrobot.org">PyLabRobot</a>, and make an MCP that connects your company's context to it. That is layer 1 of the cake. Layer 2 is baking in expert judgment. And there are more layers of cake than two.</p>
     <div class="cake">
       <div><span class="n">Layer 1</span><span class="t">Get it going</span><span class="d">From an instrument, to a Raspberry Pi, to an MCP that connects your company's context to the PyLabRobot that drives it.</span></div>
       <div><span class="n">Layer 2</span><span class="t">Bake in expert judgment</span><span class="d">Expert-guided fine-tuning, to the level that is appropriate for the biological material.</span></div>
@@ -286,7 +290,7 @@
     <h3 style="margin-top:34px">What you need</h3>
     <table>
       <tr><td>Hamilton STAR or STARlet</td><td>The instrument.</td></tr>
-      <tr><td>Raspberry Pi</td><td>With its power supply and a microSD card. This is the small computer that stays with the instrument.</td></tr>
+      <tr><td>Raspberry Pi</td><td>With its power supply and a microSD card. This is the small computer that stays with the instrument. It does not have to be a Pi: any computer that can stay with the instrument and run Python works.</td></tr>
       <tr><td>USB-A to USB-B cable</td><td>Connects the Pi to the Hamilton. USB-A is the flat plug and goes into the Pi. USB-B is the square plug and goes into the Hamilton.</td></tr>
       <tr><td>Ethernet cable or Wi-Fi</td><td>Puts the Pi on your network.</td></tr>
       <tr><td>A laptop with Claude Code</td><td>Where you work with the agent.</td></tr>
@@ -296,7 +300,7 @@
       <div class="no">1</div>
       <div class="body">
         <h3>Start with a Raspberry Pi</h3>
-        <p>The Pi is a dedicated computer for the instrument. It sits next to the Hamilton and stays on, so the agent always has a way in and your laptop can come and go.</p>
+        <p>The Pi is a dedicated computer for the instrument. It sits next to the Hamilton and stays on, so the agent always has a way in and your laptop can come and go. It does not have to be a Raspberry Pi. Any computer that can stay with the instrument works too, and then you start at step 2.</p>
         <p>Install Raspberry Pi OS on the microSD card with the <a href="https://www.raspberrypi.com/software/">Raspberry Pi Imager</a>. In the Imager's settings, give the Pi a hostname, create a user, and turn on SSH. This guide uses the hostname <code>star-pi</code>.</p>
       </div>
     </div>
@@ -789,165 +793,8 @@ python transfer.py dilution    # a two-fold serial dilution</pre></div>
       <div class="no">3</div>
       <div class="body">
         <h3>Fine-tune with the expert's principles</h3>
-        <p>Now go into the deck and think it through. When you do this experiment, with the tips in place, how do you want this to go? By the physics of the tip, the liquid might hang as a drop. So you want a certain degree of blowout volume, a certain degree of speed, and a certain distance from the bottom. All of these are tunable parameters.</p>
-        <p>Start with regular parameters, maximum speed for everything. Then tune:</p>
-        <div class="tune" id="tunable">
-          <div class="head"><span>Tunable parameter</span><span>What the expert wants</span><span>Start here</span></div>
-          <div><span class="p">Blowout volume</span><span class="w">Sufficient blowout, to ensure proper liquid handling.</span><span class="s">For low volume, 20 percent of the volume.</span></div>
-          <div><span class="p">Speed</span><span class="w">Maximum speed for everything. Gentler into cells. A forceful dispense for lysis.</span><span class="s">Maximum. Into cells, 50 to 70 percent of maximum.</span></div>
-          <div><span class="p">Distance from the bottom, at aspirate</span><span class="w">Low enough that the liquid is not missed.</span><span class="s">1 mm. <span class="ph">Placeholder.</span></span></div>
-          <div><span class="p">Distance from the bottom, at dispense</span><span class="w">A Z height where every droplet catches the well. Over cells: far enough that the tips do not scrape the cells, close enough that the droplet dips in the well.</span><span class="s">1 mm, and 3 mm over cells. <span class="ph">Placeholders.</span></span></div>
-        </div>
-        <p class="note">There are no exact speeds in this guide. The top speed differs with the instrument, the tips and the liquid, so that number is yours to set.</p>
-        <p>This is an expert's guide to liquid handling. Use it as a starting principle for what would work, then tune it on your own instrument, with your own tips and labware.</p>
-        <p>These go into a rulebook. The agent says what the material is. The rulebook sets the speed, the heights and the blowout.</p>
-        <div class="file"><div class="cap">code/principles.py</div>
-<pre data-file="code/principles.py">"""Expert-guided fine-tuning, as a rulebook.
-
-You do not always need an optimizer. Start with regular parameters and
-maximum speed for everything, then fine-tune to the level that is
-appropriate for the biological material.
-
-The numbers below are the tunable parameters: the blowout volume, the
-speed and the distance from the bottom. Use them as a starting
-principle for what would work, then tune them on your own instrument.
-
-There is no exact speed here. Speed is a share of the top speed, and
-the top speed differs with the instrument, the tips and the liquid.
-Set yours in TOP_SPEED.
-
-The words are the expert's. A number marked PLACEHOLDER is the
-expert's to set for the instrument, the tips and the labware.
-
-    python principles.py
-"""
-from dataclasses import dataclass
-
-TOP_SPEED = None             # uL/s. Yours to set. A real run needs it.
-BLOWOUT_SHARE = 0.20         # blowout air, as a share of the volume
-CELLS_SPEED_SHARE = 0.60     # 50 to 70 percent of the top speed
-ASPIRATE_HEIGHT = 1.0        # mm above the bottom. PLACEHOLDER
-DISPENSE_HEIGHT = 1.0        # mm above the bottom. PLACEHOLDER
-CELLS_DISPENSE_HEIGHT = 3.0  # mm above the bottom. PLACEHOLDER
-
-SET_TOP_SPEED = ("TOP_SPEED is not set. It differs with the instrument,"
-                 " the tips\nand the liquid. Set yours in principles.py.")
-
-EVERY_TRANSFER = (
-    "Start with regular parameters, maximum speed for everything.",
-    "Sufficient blowout volume, to ensure proper liquid handling.",
-    "Aspirate low enough that the liquid is not missed.",
-)
-CATCH = "Dispense at a Z height where every droplet catches the well."
-
-
-@dataclass(frozen=True)
-class Handling:
-    aspirate_speed: float    # a share of the top speed
-    aspirate_height: float
-    dispense_speed: float    # a share of the top speed
-    dispense_height: float
-    why: tuple
-
-
-def handling(material: str) -&gt; Handling:
-    """What the expert would set for this material."""
-    if material == "regular":
-        speed, height, why = 1.0, DISPENSE_HEIGHT, (CATCH,)
-    elif material == "cells":
-        speed = CELLS_SPEED_SHARE
-        height = CELLS_DISPENSE_HEIGHT
-        why = ("Gentler into cells: 50 to 70 percent of maximum speed.",
-               "Far enough that the tips do not scrape the cells.",
-               "Close enough that the droplet dips in the well.")
-    elif material == "lysis":
-        speed, height = 1.0, DISPENSE_HEIGHT
-        why = ("A forceful dispense for lysis.", CATCH)
-    else:
-        raise ValueError(
-            f"No principle for {material!r}. Ask the expert.")
-    return Handling(1.0, ASPIRATE_HEIGHT, speed, height,
-                    EVERY_TRANSFER + why)
-
-
-def _args(share: float, height: float, vols):
-    how = {"liquid_height": [height] * len(vols),
-           "blow_out_air_volume": [BLOWOUT_SHARE * v for v in vols]}
-    if TOP_SPEED is not None:
-        how["flow_rates"] = [share * TOP_SPEED] * len(vols)
-    return how    # with no top speed, the speed is left to PyLabRobot
-
-
-def aspirate_args(h: Handling, vols):
-    return _args(h.aspirate_speed, h.aspirate_height, vols)
-
-
-def dispense_args(h: Handling, vols):
-    return _args(h.dispense_speed, h.dispense_height, vols)
-
-
-def speed(share: float) -&gt; str:
-    words = ("top speed" if share == 1
-             else f"{share * 100:g} percent of top speed")
-    if TOP_SPEED is None:
-        return words
-    return f"{words}, {share * TOP_SPEED:g} uL/s"
-
-
-def describe(material: str, volume: float) -&gt; str:
-    h = handling(material)
-    lines = [
-        f"{material}, {volume:g} uL",
-        f"  aspirate at {speed(h.aspirate_speed)},"
-        f" {h.aspirate_height:g} mm above the bottom",
-        f"  dispense at {speed(h.dispense_speed)},"
-        f" {h.dispense_height:g} mm above the bottom",
-        f"  blowout  {BLOWOUT_SHARE * volume:g} uL",
-    ]
-    return "\n".join(lines + [f"  - {reason}" for reason in h.why])
-
-
-if __name__ == "__main__":
-    for material in ("regular", "cells", "lysis"):
-        print(describe(material, 100))
-        print()
-    if TOP_SPEED is None:
-        print(SET_TOP_SPEED)</pre></div>
-        <div class="file"><div class="cap">on the Pi</div>
-<pre>python principles.py</pre></div>
-        <div class="file"><div class="cap">what it prints</div>
-<pre data-file="code/example_outputs/principles.txt">regular, 100 uL
-  aspirate at top speed, 1 mm above the bottom
-  dispense at top speed, 1 mm above the bottom
-  blowout  20 uL
-  - Start with regular parameters, maximum speed for everything.
-  - Sufficient blowout volume, to ensure proper liquid handling.
-  - Aspirate low enough that the liquid is not missed.
-  - Dispense at a Z height where every droplet catches the well.
-
-cells, 100 uL
-  aspirate at top speed, 1 mm above the bottom
-  dispense at 60 percent of top speed, 3 mm above the bottom
-  blowout  20 uL
-  - Start with regular parameters, maximum speed for everything.
-  - Sufficient blowout volume, to ensure proper liquid handling.
-  - Aspirate low enough that the liquid is not missed.
-  - Gentler into cells: 50 to 70 percent of maximum speed.
-  - Far enough that the tips do not scrape the cells.
-  - Close enough that the droplet dips in the well.
-
-lysis, 100 uL
-  aspirate at top speed, 1 mm above the bottom
-  dispense at top speed, 1 mm above the bottom
-  blowout  20 uL
-  - Start with regular parameters, maximum speed for everything.
-  - Sufficient blowout volume, to ensure proper liquid handling.
-  - Aspirate low enough that the liquid is not missed.
-  - A forceful dispense for lysis.
-  - Dispense at a Z height where every droplet catches the well.
-
-TOP_SPEED is not set. It differs with the instrument, the tips
-and the liquid. Set yours in principles.py.</pre></div>
+        <p>Now go into the deck and think it through. When you do this experiment, with the tips in place, how do you want this to go? The blowout volume, the speed and the distance from the bottom are all tunable parameters.</p>
+        <p>The expert's principles have a part of their own: <a href="liquid-handling.html">Liquid handling</a>. It holds the tunable parameters, where to start with each, and the rulebook, <code>code/principles.py</code>. Here they are applied on this deck. The agent says what the material is. The rulebook sets the speed, the heights and the blowout.</p>
         <div class="say">
           <div class="who">Say to Claude Code</div>
           <p>Run the simple transfer for cells in simulation. Show me the speed, the heights and the blowout it used, and why.</p>
@@ -971,16 +818,7 @@ pip#  vol(ul)  resource             offset           flow rate  blowout    lld_z
 <pre>python transfer.py simple --material blood</pre></div>
         <div class="file"><div class="cap">what it prints</div>
 <pre data-file="code/example_outputs/no_principle.txt">ValueError: No principle for 'blood'. Ask the expert.</pre></div>
-        <p class="note">The numbers marked PLACEHOLDER in the rulebook are the expert's to set for the tips and the labware: the 3 heights. The top speed is yours to set, and a real run does not start without it.</p>
-        <div class="say">
-          <div class="who">Say to Claude Code</div>
-          <p>Read the PyLabRobot source you installed. What speeds does it allow for my instrument and my tips, and what does its own liquid class use? Show me where you read each number. I will pick the top speed.</p>
-        </div>
-        <p>To use the rulebook in your own harness, hand it to your agent.</p>
-        <div class="say">
-          <div class="who">Say to Claude Code</div>
-          <p>Read <code>code/principles.py</code> in the Agentic Lab Guide. Use it as the starting point for every transfer you write for my instrument. Before anything runs, show me the blowout, the speed and the distance from the bottom for each step, and tell me which numbers I still have to set.</p>
-        </div>
+        <p class="note">A real simple transfer does not start until you set your top speed in the rulebook.</p>
       </div>
     </div>
 
