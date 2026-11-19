@@ -1,10 +1,10 @@
 cells, 100 uL
-  aspirate 500 uL/s, 1 mm above the bottom
-  dispense 300 uL/s, 3 mm above the bottom
+  aspirate at top speed, 1 mm above the bottom
+  dispense at 60 percent of top speed, 3 mm above the bottom
   blowout  20 uL
 ...
 Dispensing:
 pip#  vol(ul)  resource             offset           flow rate  blowout    lld_z
-  p0: 100.0    plate_well_A1        0,0,0            300.0      20.0       3.0
-  p1: 100.0    plate_well_B1        0,0,0            300.0      20.0       3.0
+  p0: 100.0    plate_well_A1        0,0,0            None       20.0       3.0
+  p1: 100.0    plate_well_B1        0,0,0            None       20.0       3.0
 ...

@@ -85,6 +85,9 @@ then tune it on your own instrument, with your own tips and labware.
 | Distance from the bottom, at aspirate | Low enough that the liquid is not missed. | 1 mm. Placeholder. |
 | Distance from the bottom, at dispense | A Z height where every droplet catches the well. Over cells: far enough that the tips do not scrape the cells, close enough that the droplet dips in the well. | 1 mm, and 3 mm over cells. Placeholders. |
 
+There are no exact speeds in this guide. The top speed differs with the instrument, the
+tips and the liquid, so that number is yours to set.
+
 The same parameters are in [code/principles.py](code/principles.py), so your agent can
 read them.
 
@@ -108,7 +111,7 @@ The guide shows real files, and they live here.
 | [code/instrument_mcp.py](code/instrument_mcp.py) | Layer 1: an MCP server that offers the instrument to Claude Code. Simulation unless `STAR_REAL=1` |
 | [code/deck.py](code/deck.py) | Layer 2: the deck in code. Prints the deck so you can compare it with the photo |
 | [code/transfer.py](code/transfer.py) | Layer 2: the simple transfer and the serial dilution. It takes a material, not a speed |
-| [code/principles.py](code/principles.py) | Layer 2: the expert's principles as a rulebook. It sets the speed, the heights and the blowout |
+| [code/principles.py](code/principles.py) | Layer 2: the expert's principles as a rulebook. It sets the speed as a share of your top speed, the heights and the blowout |
 | [code/dye_design.py](code/dye_design.py) | Layer 3: works out the Rhodamine B concentration and how to make it up |
 | [code/read_check.py](code/read_check.py) | Layer 3: the CV, each channel against the median, and per-channel corrections |
 | [code/example_reads/](code/example_reads) | Synthetic plate reads, not measurements, from a made-up instrument with one channel 15 percent low |
@@ -135,8 +138,21 @@ python read_check.py simple example_reads/simple_low_channel.csv --blank 0.045 -
 Status: every file is tested in simulation with the pinned versions. The real-instrument
 path uses the same calls and has not been run for this guide yet. No dye has been run and no
 plate has been read: the example reads are synthetic, and the Rhodamine B design is a
-calculation from public numbers. In the rulebook, the top speed and the 3 heights are
-placeholders for the expert to set.
+calculation from public numbers. In the rulebook, the 3 heights are placeholders for the
+expert to set. The top speed is left for you to set, and a real simple transfer does not
+start without it.
+
+## How this bakes into the rest
+
+This guide is one piece. The same walk runs through the other repositories.
+
+| | | |
+| --- | --- | --- |
+| **Step 1** | [plr-reverse-engineer](https://github.com/di-omics/plr-reverse-engineer) | Capture, decode and guarded replay for instruments with no automation API. |
+| **Steps 2 and 3** | [plr-mcp](https://github.com/di-omics/plr-mcp) | Lab instruments as MCP tools an agent can call. Simulation by default, with hardware permission enforced in code. |
+| **The QC gate** | [autonomous-lab](https://github.com/di-omics/autonomous-lab) | Expert QC gates, provenance and permission, across a whole workcell. |
+| **The judgment** | [drugdev-gym](https://github.com/di-omics/drugdev-gym) | The same move, one level up. Bench knowledge written down as plain-word rules, and simulated environments where a model can train on them. Simulation only. |
+| **The arms** | [robot-lab-handling](https://github.com/di-omics/robot-lab-handling) | Robot arms on everyday lab handling, in simulation. |
 
 ## Stay at the instrument
 

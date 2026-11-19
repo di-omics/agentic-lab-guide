@@ -1,6 +1,6 @@
 regular, 100 uL
-  aspirate 500 uL/s, 1 mm above the bottom
-  dispense 500 uL/s, 1 mm above the bottom
+  aspirate at top speed, 1 mm above the bottom
+  dispense at top speed, 1 mm above the bottom
   blowout  20 uL
   - Start with regular parameters, maximum speed for everything.
   - Sufficient blowout volume, to ensure proper liquid handling.
@@ -8,8 +8,8 @@ regular, 100 uL
   - Dispense at a Z height where every droplet catches the well.
 
 cells, 100 uL
-  aspirate 500 uL/s, 1 mm above the bottom
-  dispense 300 uL/s, 3 mm above the bottom
+  aspirate at top speed, 1 mm above the bottom
+  dispense at 60 percent of top speed, 3 mm above the bottom
   blowout  20 uL
   - Start with regular parameters, maximum speed for everything.
   - Sufficient blowout volume, to ensure proper liquid handling.
@@ -19,8 +19,8 @@ cells, 100 uL
   - Close enough that the droplet dips in the well.
 
 lysis, 100 uL
-  aspirate 500 uL/s, 1 mm above the bottom
-  dispense 500 uL/s, 1 mm above the bottom
+  aspirate at top speed, 1 mm above the bottom
+  dispense at top speed, 1 mm above the bottom
   blowout  20 uL
   - Start with regular parameters, maximum speed for everything.
   - Sufficient blowout volume, to ensure proper liquid handling.
@@ -28,3 +28,5 @@ lysis, 100 uL
   - A forceful dispense for lysis.
   - Dispense at a Z height where every droplet catches the well.
 
+TOP_SPEED is not set. It differs with the instrument, the tips
+and the liquid. Set yours in principles.py.

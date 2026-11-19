@@ -9,7 +9,8 @@ eight channels at once. Simulation unless you pass --real.
     python transfer.py simple --material cells
 
 The agent says what the material is. The rulebook in principles.py
-sets the speed, the heights and the blowout.
+sets the speed, the heights and the blowout. A real simple transfer
+needs your top speed set there first.
 
 Reservoir column 1 holds the Rhodamine B, column 2 the water, and
 column 12 takes waste.
@@ -17,11 +18,13 @@ column 12 takes waste.
 import argparse
 import asyncio
 import json
+import sys
 
 from pylabrobot.resources import Coordinate
 
 from deck import connect
-from principles import aspirate_args, describe, dispense_args, handling
+from principles import (SET_TOP_SPEED, TOP_SPEED, aspirate_args,
+                        describe, dispense_args, handling)
 
 VOLUME = 100        # uL in every well at the end
 MIX_CYCLES = 3      # times to draw up and push out when mixing
@@ -56,6 +59,9 @@ async def simple(lh, tips, reservoir, plate, corrections=None,
     # The expert's principles set how the liquid is handled.
     how = handling(material)
     print(describe(material, volume))
+    if TOP_SPEED is None:
+        print(SET_TOP_SPEED)
+        print("Until then, the speed is left to PyLabRobot.")
 
     # One volume per channel, rows A to H. Corrections come from a read.
     factors = corrections or {}
@@ -116,6 +122,8 @@ def report(plate):
 
 
 async def main(args) -> None:
+    if args.real and args.task == "simple" and TOP_SPEED is None:
+        sys.exit("A real run needs your top speed.\n" + SET_TOP_SPEED)
     lh, tips, reservoir, plate = await connect(args.real, args.starlet)
     if args.task == "simple":
         corrections = None

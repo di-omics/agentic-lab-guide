@@ -98,6 +98,7 @@
 
   /* the walk */
   .cake.walk > div { grid-template-columns: 40px 230px 1fr; }
+  .cake.rest > div { grid-template-columns: 104px 190px 1fr; }
 
   /* passes and tunable parameters */
   .pass { font-size: 13px; color: var(--accent); margin: 44px 0 12px; }
@@ -173,6 +174,7 @@
     .link .wire { width: 1px; height: 30px; margin: 0 auto 6px; }
     .link .wire::after { right: -3px; top: auto; bottom: -1px; transform: rotate(135deg); }
     .cake > div { grid-template-columns: 1fr; gap: 2px; }
+    .cake.rest > div { grid-template-columns: 1fr; }
     .cake.walk > div { grid-template-columns: 28px 1fr; }
     .cake.walk .d { grid-column: 2; }
     .tune > div { grid-template-columns: 1fr; gap: 3px; }
@@ -622,7 +624,8 @@ eight channels at once. Simulation unless you pass --real.
     python transfer.py simple --material cells
 
 The agent says what the material is. The rulebook in principles.py
-sets the speed, the heights and the blowout.
+sets the speed, the heights and the blowout. A real simple transfer
+needs your top speed set there first.
 
 Reservoir column 1 holds the Rhodamine B, column 2 the water, and
 column 12 takes waste.
@@ -630,11 +633,13 @@ column 12 takes waste.
 import argparse
 import asyncio
 import json
+import sys
 
 from pylabrobot.resources import Coordinate
 
 from deck import connect
-from principles import aspirate_args, describe, dispense_args, handling
+from principles import (SET_TOP_SPEED, TOP_SPEED, aspirate_args,
+                        describe, dispense_args, handling)
 
 VOLUME = 100        # uL in every well at the end
 MIX_CYCLES = 3      # times to draw up and push out when mixing
@@ -669,6 +674,9 @@ async def simple(lh, tips, reservoir, plate, corrections=None,
     # The expert's principles set how the liquid is handled.
     how = handling(material)
     print(describe(material, volume))
+    if TOP_SPEED is None:
+        print(SET_TOP_SPEED)
+        print("Until then, the speed is left to PyLabRobot.")
 
     # One volume per channel, rows A to H. Corrections come from a read.
     factors = corrections or {}
@@ -729,6 +737,8 @@ def report(plate):
 
 
 async def main(args) -&gt; None:
+    if args.real and args.task == "simple" and TOP_SPEED is None:
+        sys.exit("A real run needs your top speed.\n" + SET_TOP_SPEED)
     lh, tips, reservoir, plate = await connect(args.real, args.starlet)
     if args.task == "simple":
         corrections = None
@@ -788,6 +798,7 @@ python transfer.py dilution    # a two-fold serial dilution</pre></div>
           <div><span class="p">Distance from the bottom, at aspirate</span><span class="w">Low enough that the liquid is not missed.</span><span class="s">1 mm. <span class="ph">Placeholder.</span></span></div>
           <div><span class="p">Distance from the bottom, at dispense</span><span class="w">A Z height where every droplet catches the well. Over cells: far enough that the tips do not scrape the cells, close enough that the droplet dips in the well.</span><span class="s">1 mm, and 3 mm over cells. <span class="ph">Placeholders.</span></span></div>
         </div>
+        <p class="note">There are no exact speeds in this guide. The top speed differs with the instrument, the tips and the liquid, so that number is yours to set.</p>
         <p>This is an expert's guide to liquid handling. Use it as a starting principle for what would work, then tune it on your own instrument, with your own tips and labware.</p>
         <p>These go into a rulebook. The agent says what the material is. The rulebook sets the speed, the heights and the blowout.</p>
         <div class="file"><div class="cap">code/principles.py</div>
@@ -801,6 +812,10 @@ The numbers below are the tunable parameters: the blowout volume, the
 speed and the distance from the bottom. Use them as a starting
 principle for what would work, then tune them on your own instrument.
 
+There is no exact speed here. Speed is a share of the top speed, and
+the top speed differs with the instrument, the tips and the liquid.
+Set yours in TOP_SPEED.
+
 The words are the expert's. A number marked PLACEHOLDER is the
 expert's to set for the instrument, the tips and the labware.
 
@@ -808,13 +823,15 @@ expert's to set for the instrument, the tips and the labware.
 """
 from dataclasses import dataclass
 
-MAX_SPEED = 500.0            # uL/s. PLACEHOLDER: the most PyLabRobot
-                             # sends a STAR. Set it for your tips.
+TOP_SPEED = None             # uL/s. Yours to set. A real run needs it.
 BLOWOUT_SHARE = 0.20         # blowout air, as a share of the volume
-CELLS_SPEED_SHARE = 0.60     # 50 to 70 percent of maximum speed
+CELLS_SPEED_SHARE = 0.60     # 50 to 70 percent of the top speed
 ASPIRATE_HEIGHT = 1.0        # mm above the bottom. PLACEHOLDER
 DISPENSE_HEIGHT = 1.0        # mm above the bottom. PLACEHOLDER
 CELLS_DISPENSE_HEIGHT = 3.0  # mm above the bottom. PLACEHOLDER
+
+SET_TOP_SPEED = ("TOP_SPEED is not set. It differs with the instrument,"
+                 " the tips\nand the liquid. Set yours in principles.py.")
 
 EVERY_TRANSFER = (
     "Start with regular parameters, maximum speed for everything.",
@@ -826,9 +843,9 @@ CATCH = "Dispense at a Z height where every droplet catches the well."
 
 @dataclass(frozen=True)
 class Handling:
-    aspirate_speed: float
+    aspirate_speed: float    # a share of the top speed
     aspirate_height: float
-    dispense_speed: float
+    dispense_speed: float    # a share of the top speed
     dispense_height: float
     why: tuple
 
@@ -836,42 +853,54 @@ class Handling:
 def handling(material: str) -&gt; Handling:
     """What the expert would set for this material."""
     if material == "regular":
-        speed, height, why = MAX_SPEED, DISPENSE_HEIGHT, (CATCH,)
+        speed, height, why = 1.0, DISPENSE_HEIGHT, (CATCH,)
     elif material == "cells":
-        speed = MAX_SPEED * CELLS_SPEED_SHARE
+        speed = CELLS_SPEED_SHARE
         height = CELLS_DISPENSE_HEIGHT
         why = ("Gentler into cells: 50 to 70 percent of maximum speed.",
                "Far enough that the tips do not scrape the cells.",
                "Close enough that the droplet dips in the well.")
     elif material == "lysis":
-        speed, height = MAX_SPEED, DISPENSE_HEIGHT
+        speed, height = 1.0, DISPENSE_HEIGHT
         why = ("A forceful dispense for lysis.", CATCH)
     else:
         raise ValueError(
             f"No principle for {material!r}. Ask the expert.")
-    return Handling(MAX_SPEED, ASPIRATE_HEIGHT, speed, height,
+    return Handling(1.0, ASPIRATE_HEIGHT, speed, height,
                     EVERY_TRANSFER + why)
 
 
+def _args(share: float, height: float, vols):
+    how = {"liquid_height": [height] * len(vols),
+           "blow_out_air_volume": [BLOWOUT_SHARE * v for v in vols]}
+    if TOP_SPEED is not None:
+        how["flow_rates"] = [share * TOP_SPEED] * len(vols)
+    return how    # with no top speed, the speed is left to PyLabRobot
+
+
 def aspirate_args(h: Handling, vols):
-    return {"flow_rates": [h.aspirate_speed] * len(vols),
-            "liquid_height": [h.aspirate_height] * len(vols),
-            "blow_out_air_volume": [BLOWOUT_SHARE * v for v in vols]}
+    return _args(h.aspirate_speed, h.aspirate_height, vols)
 
 
 def dispense_args(h: Handling, vols):
-    return {"flow_rates": [h.dispense_speed] * len(vols),
-            "liquid_height": [h.dispense_height] * len(vols),
-            "blow_out_air_volume": [BLOWOUT_SHARE * v for v in vols]}
+    return _args(h.dispense_speed, h.dispense_height, vols)
+
+
+def speed(share: float) -&gt; str:
+    words = ("top speed" if share == 1
+             else f"{share * 100:g} percent of top speed")
+    if TOP_SPEED is None:
+        return words
+    return f"{words}, {share * TOP_SPEED:g} uL/s"
 
 
 def describe(material: str, volume: float) -&gt; str:
     h = handling(material)
     lines = [
         f"{material}, {volume:g} uL",
-        f"  aspirate {h.aspirate_speed:g} uL/s,"
+        f"  aspirate at {speed(h.aspirate_speed)},"
         f" {h.aspirate_height:g} mm above the bottom",
-        f"  dispense {h.dispense_speed:g} uL/s,"
+        f"  dispense at {speed(h.dispense_speed)},"
         f" {h.dispense_height:g} mm above the bottom",
         f"  blowout  {BLOWOUT_SHARE * volume:g} uL",
     ]
@@ -881,13 +910,15 @@ def describe(material: str, volume: float) -&gt; str:
 if __name__ == "__main__":
     for material in ("regular", "cells", "lysis"):
         print(describe(material, 100))
-        print()</pre></div>
+        print()
+    if TOP_SPEED is None:
+        print(SET_TOP_SPEED)</pre></div>
         <div class="file"><div class="cap">on the Pi</div>
 <pre>python principles.py</pre></div>
         <div class="file"><div class="cap">what it prints</div>
 <pre data-file="code/example_outputs/principles.txt">regular, 100 uL
-  aspirate 500 uL/s, 1 mm above the bottom
-  dispense 500 uL/s, 1 mm above the bottom
+  aspirate at top speed, 1 mm above the bottom
+  dispense at top speed, 1 mm above the bottom
   blowout  20 uL
   - Start with regular parameters, maximum speed for everything.
   - Sufficient blowout volume, to ensure proper liquid handling.
@@ -895,8 +926,8 @@ if __name__ == "__main__":
   - Dispense at a Z height where every droplet catches the well.
 
 cells, 100 uL
-  aspirate 500 uL/s, 1 mm above the bottom
-  dispense 300 uL/s, 3 mm above the bottom
+  aspirate at top speed, 1 mm above the bottom
+  dispense at 60 percent of top speed, 3 mm above the bottom
   blowout  20 uL
   - Start with regular parameters, maximum speed for everything.
   - Sufficient blowout volume, to ensure proper liquid handling.
@@ -906,14 +937,17 @@ cells, 100 uL
   - Close enough that the droplet dips in the well.
 
 lysis, 100 uL
-  aspirate 500 uL/s, 1 mm above the bottom
-  dispense 500 uL/s, 1 mm above the bottom
+  aspirate at top speed, 1 mm above the bottom
+  dispense at top speed, 1 mm above the bottom
   blowout  20 uL
   - Start with regular parameters, maximum speed for everything.
   - Sufficient blowout volume, to ensure proper liquid handling.
   - Aspirate low enough that the liquid is not missed.
   - A forceful dispense for lysis.
-  - Dispense at a Z height where every droplet catches the well.</pre></div>
+  - Dispense at a Z height where every droplet catches the well.
+
+TOP_SPEED is not set. It differs with the instrument, the tips
+and the liquid. Set yours in principles.py.</pre></div>
         <div class="say">
           <div class="who">Say to Claude Code</div>
           <p>Run the simple transfer for cells in simulation. Show me the speed, the heights and the blowout it used, and why.</p>
@@ -922,21 +956,26 @@ lysis, 100 uL
 <pre>python transfer.py simple --material cells</pre></div>
         <div class="file"><div class="cap">the lines to look for</div>
 <pre data-file="code/example_outputs/cells_transfer.txt">cells, 100 uL
-  aspirate 500 uL/s, 1 mm above the bottom
-  dispense 300 uL/s, 3 mm above the bottom
+  aspirate at top speed, 1 mm above the bottom
+  dispense at 60 percent of top speed, 3 mm above the bottom
   blowout  20 uL
 ...
 Dispensing:
 pip#  vol(ul)  resource             offset           flow rate  blowout    lld_z
-  p0: 100.0    plate_well_A1        0,0,0            300.0      20.0       3.0
-  p1: 100.0    plate_well_B1        0,0,0            300.0      20.0       3.0
+  p0: 100.0    plate_well_A1        0,0,0            None       20.0       3.0
+  p1: 100.0    plate_well_B1        0,0,0            None       20.0       3.0
 ...</pre></div>
+        <p>The blowout and the height are already in the transfer. The flow rate reads <code>None</code> until you set your top speed in the rulebook. Then the dispense into cells runs at 60 percent of it.</p>
         <p>The transfer has no speed to argue with, only a material. A material without a principle is refused:</p>
         <div class="file"><div class="cap">on the Pi</div>
 <pre>python transfer.py simple --material blood</pre></div>
         <div class="file"><div class="cap">what it prints</div>
 <pre data-file="code/example_outputs/no_principle.txt">ValueError: No principle for 'blood'. Ask the expert.</pre></div>
-        <p class="note">The numbers marked PLACEHOLDER in the rulebook are the expert's to set for the instrument, the tips and the labware: the top speed and the 3 heights.</p>
+        <p class="note">The numbers marked PLACEHOLDER in the rulebook are the expert's to set for the tips and the labware: the 3 heights. The top speed is yours to set, and a real run does not start without it.</p>
+        <div class="say">
+          <div class="who">Say to Claude Code</div>
+          <p>Read the PyLabRobot source you installed. What speeds does it allow for my instrument and my tips, and what does its own liquid class use? Show me where you read each number. I will pick the top speed.</p>
+        </div>
         <p>To use the rulebook in your own harness, hand it to your agent.</p>
         <div class="say">
           <div class="who">Say to Claude Code</div>
@@ -1017,7 +1056,7 @@ Simple transfer: every well should read about 0.80 above the blank.
 Serial dilution, columns 1 to 6: 0.800, 0.400, 0.200, 0.100, 0.050, 0.025
 The last columns sit near a reader's floor. Check yours can read them.</pre></div>
         <p class="note">This is a starting point from public numbers: the supplier's extinction coefficient, measured in methanol, and a path of about 0.3 cm for 100 uL. Read the dye once on your own reader and adjust.</p>
-        <p>Load the reservoir, run the transfer once with water, then run it with the dye. The transfers carry the principles from Layer 2. Someone stays at the instrument.</p>
+        <p>Load the reservoir, run the transfer once with water, then run it with the dye. The transfers carry the principles from Layer 2. Set your top speed in the rulebook first: a real simple transfer does not start without it. Someone stays at the instrument.</p>
         <div class="file"><div class="cap">on the Pi</div>
 <pre>python transfer.py simple --real
 python transfer.py dilution --real</pre></div>
@@ -1222,6 +1261,19 @@ PASS</pre></div>
     <h2>Biological validation.</h2>
     <p>If the Rhodamine QC looks good, it is good for biological validation.</p>
     <div class="open"><b>Being written.</b> Stay tuned.</div>
+  </section>
+
+  <section>
+    <p class="eyebrow" id="the-rest">Beyond this guide</p>
+    <h2>How this bakes into the rest.</h2>
+    <p>This guide is one piece. The same walk runs through the other repositories.</p>
+    <div class="cake rest">
+      <div><span class="n">Step 1</span><span class="t"><a href="https://github.com/di-omics/plr-reverse-engineer">plr-reverse-engineer</a></span><span class="d">Capture, decode and guarded replay for instruments with no automation API.</span></div>
+      <div><span class="n">Steps 2 and 3</span><span class="t"><a href="https://github.com/di-omics/plr-mcp">plr-mcp</a></span><span class="d">Lab instruments as MCP tools an agent can call. Simulation by default, with hardware permission enforced in code.</span></div>
+      <div><span class="n">The QC gate</span><span class="t"><a href="https://github.com/di-omics/autonomous-lab">autonomous-lab</a></span><span class="d">Expert QC gates, provenance and permission, across a whole workcell.</span></div>
+      <div><span class="n">The judgment</span><span class="t"><a href="https://github.com/di-omics/drugdev-gym">drugdev-gym</a></span><span class="d">The same move, one level up. Bench knowledge written down as plain-word rules, and simulated environments where a model can train on them. Simulation only.</span></div>
+      <div><span class="n">The arms</span><span class="t"><a href="https://github.com/di-omics/robot-lab-handling">robot-lab-handling</a></span><span class="d">Robot arms on everyday lab handling, in simulation.</span></div>
+    </div>
   </section>
 
   <footer>
