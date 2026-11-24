@@ -6,7 +6,7 @@ A step-by-step guide to putting an AI agent in the driver's seat of a real lab i
 and getting it to perform at the scientist's bar. The path is universal. Chapter one walks
 it with a Hamilton STAR.
 
-Written by Di Hu. Draft, November 2026.
+Written by Di Hu. Draft, November 2026. Everything here has been tested in simulation only, and the example plate reads are synthetic.
 
 **Read the guide: [di-omics.github.io/agentic-lab-guide](https://di-omics.github.io/agentic-lab-guide/)**
 
@@ -126,7 +126,7 @@ The guide shows real files, and they live here.
 | [code/dye_design.py](code/dye_design.py) | Layer 3: works out the Rhodamine B concentration and how to make it up |
 | [code/read_check.py](code/read_check.py) | Layer 3: the CV, each channel against the median, and per-channel corrections |
 | [code/example_reads/](code/example_reads) | Synthetic plate reads, not measurements, from a made-up instrument with one channel 15 percent low |
-| [code/example_outputs/](code/example_outputs) | What the commands in the guide print, captured from real runs of the code |
+| [code/example_outputs/](code/example_outputs) | What the commands in the guide print, captured from runs of the code in simulation and on the synthetic reads |
 | [tools/bake.py](tools/bake.py) | Copies the code, the outputs and the stylesheet into the pages. `--check` fails if they differ |
 | [tools/make_example_reads.py](tools/make_example_reads.py) | Makes the synthetic reads |
 
